@@ -1,0 +1,22 @@
+<?php
+namespace App\Controllers;
+
+use App\Core\Controller;
+
+class DashboardController extends Controller
+{
+    public function __construct()
+    {
+        if (!isset($_SESSION['usuario_id'])) {
+            $this->redirect('/login');
+        }
+    }
+
+    public function index()
+    {
+        $this->render('propietario/dashboard', [
+            'nombre_usuario' => $_SESSION['nombres'] . ' ' . $_SESSION['apellidos'],
+            'titulo' => 'Centro de operaciones',
+        ]);
+    }
+}
