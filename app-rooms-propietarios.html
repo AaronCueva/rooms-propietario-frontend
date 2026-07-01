@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APP-ROOMS · Propietarios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#15161B;
+    --ink-soft:#5B5F6B;
+    --ink-faint:#9499A3;
+    --navy:#161B2C;
+    --navy-soft:#1F2540;
+    --navy-line:#2A3050;
+    --navy-text:#8A91B0;
+    --red:#DC2626;
+    --red-dark:#B91C1C;
+    --red-wash:#FDEAEA;
+    --gold:#B68A3C;
+    --gold-wash:#F6EEDC;
+    --paper:#F4F2EE;
+    --surface:#FFFFFF;
+    --line:#E9E5DC;
+    --line-soft:#F1EEE7;
+    --blue:#2F6FED; --blue-wash:#EAF0FE;
+    --green:#16A34A; --green-wash:#E9F8EF;
+    --amber:#D97706; --amber-wash:#FCF1E2;
+    --teal:#0EA5B7; --teal-wash:#E6F8FA;
+    --purple:#7C3AED; --purple-wash:#F0EAFE;
+    --radius-lg:20px;
+    --radius-md:14px;
+    --radius-sm:10px;
+    --shadow-card:0 1px 2px rgba(20,20,25,.04),0 8px 24px -12px rgba(20,20,25,.10);
+    --shadow-pop:0 12px 32px -8px rgba(20,20,25,.18);
+    --sidebar-w:220px;
+    --font-display:'Manrope',sans-serif;
+    --font-body:'Inter',sans-serif;
+    --font-mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--font-body);color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased;}
+  h1,h2,h3,h4{font-family:var(--font-display);margin:0;letter-spacing:-.01em;}
+  p{margin:0;}
+  button{font-family:inherit;cursor:pointer;}
+  a{text-decoration:none;color:inherit;cursor:pointer;}
+  .mono{font-family:var(--font-mono);}
+  ::selection{background:var(--red);color:#fff;}
+
+  /* ---- buttons ---- */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:999px;padding:12px 22px;font-family:var(--font-display);font-weight:700;font-size:14px;transition:transform .12s,box-shadow .12s,background .15s;}
+  .btn:active{transform:scale(.98);}
+  .btn-primary{background:var(--red);color:#fff;box-shadow:0 8px 20px -8px rgba(220,38,38,.5);}
+  .btn-primary:hover{background:var(--red-dark);}
+  .btn-dark{background:var(--navy);color:#fff;}
+  .btn-dark:hover{background:var(--navy-soft);}
+  .btn-ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--ink-faint);}
+  .btn-sm{padding:9px 16px;font-size:13px;}
+  .btn-block{width:100%;}
+  .btn-icon{width:36px;height:36px;padding:0;border-radius:10px;}
+
+  /* ---- badges ---- */
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;font-size:11.5px;font-weight:700;font-family:var(--font-display);}
+  .badge-green{background:var(--green-wash);color:var(--green);}
+  .badge-amber{background:var(--amber-wash);color:var(--amber);}
+  .badge-red{background:var(--red-wash);color:var(--red);}
+  .badge-blue{background:var(--blue-wash);color:var(--blue);}
+  .badge-purple{background:var(--purple-wash);color:var(--purple);}
+  .badge-gold{background:var(--gold-wash);color:var(--gold);}
+
+  svg.ic{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+
+  /* ===================================================================
+     AUTH
+  ==================================================================== */
+  .auth-view{min-height:100vh;display:flex;align-items:stretch;display:none;}
+  .auth-view.active{display:flex;}
+  .auth-panel{flex:0 0 480px;padding:52px 48px;background:#fff;display:flex;flex-direction:column;justify-content:center;}
+  .auth-visual{flex:1;position:relative;overflow:hidden;
+    background:
+      radial-gradient(700px 600px at 20% 30%, rgba(220,38,38,.28), transparent 60%),
+      radial-gradient(500px 500px at 90% 80%, rgba(182,138,60,.22), transparent 60%),
+      linear-gradient(155deg, var(--navy) 0%, #0B0F1C 100%);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .auth-visual-inner{text-align:center;color:#fff;padding:40px;}
+  .auth-visual-inner h2{font-size:28px;font-weight:800;line-height:1.25;margin-bottom:12px;}
+  .auth-visual-inner p{font-size:14px;color:#9AA1BC;line-height:1.65;max-width:320px;margin:0 auto;}
+  .auth-visual-stats{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:36px;max-width:320px;margin-left:auto;margin-right:auto;}
+  .av-stat{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.10);border-radius:16px;padding:18px 16px;}
+  .av-stat .n{font-family:var(--font-mono);font-weight:600;font-size:24px;color:#fff;}
+  .av-stat .l{font-size:11.5px;color:#8A91B0;margin-top:4px;}
+  .auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:36px;}
+  .auth-logo .logo-box{width:36px;height:36px;border-radius:10px;background:var(--red);display:flex;align-items:center;justify-content:center;}
+  .auth-logo .logo-box svg{width:18px;height:18px;stroke:#fff;}
+  .auth-logo .wm{font-family:var(--font-display);font-weight:800;font-size:19px;}
+  .auth-logo .wm span{color:var(--red);}
+  .auth-role-pill{display:inline-flex;align-items:center;gap:6px;background:var(--gold-wash);color:var(--gold);font-size:12px;font-weight:700;padding:5px 12px;border-radius:999px;margin-bottom:20px;}
+  .auth-panel h1{font-size:26px;font-weight:800;margin-bottom:6px;}
+  .auth-panel .sub{color:var(--ink-soft);font-size:14px;margin-bottom:28px;}
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:13px;font-weight:600;margin-bottom:7px;}
+  .field label .req{color:var(--red);}
+  .field input,.field select{width:100%;padding:12px 14px;border-radius:11px;border:1.5px solid var(--line);background:#FBFAF8;font-size:14.5px;font-family:var(--font-body);color:var(--ink);}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--red);background:#fff;}
+  .field-pw{position:relative;}
+  .field-pw svg{position:absolute;right:14px;top:13px;color:var(--ink-faint);}
+  .terms{font-size:12.5px;color:var(--ink-faint);margin:12px 0 18px;line-height:1.5;}
+  .terms a{color:var(--red);font-weight:600;}
+  .auth-footer{margin-top:18px;text-align:center;font-size:13.5px;color:var(--ink-soft);}
+  .auth-footer a{color:var(--red);font-weight:700;}
+  .divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--ink-faint);font-size:12px;}
+  .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--line);}
+  .steps-row{display:flex;align-items:center;gap:8px;margin-bottom:24px;}
+  .step-dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:13px;background:var(--line-soft);color:var(--ink-faint);}
+  .step-dot.is-done{background:var(--green);color:#fff;}
+  .step-dot.is-active{background:var(--red);color:#fff;}
+  .step-line{flex:1;height:2px;background:var(--line);}
+  .step-line.is-done{background:var(--green);}
+  .upload-box{border:1.5px dashed var(--line);border-radius:14px;padding:22px;text-align:center;background:#FBFAF8;margin-bottom:18px;}
+  .upload-box .ub-title{font-weight:700;font-size:14px;margin:10px 0 3px;}
+  .upload-box .ub-sub{font-size:12.5px;color:var(--ink-faint);}
+  .verify-note{display:flex;gap:10px;background:var(--gold-wash);border-radius:12px;padding:12px 14px;font-size:12.5px;color:#7A5C20;margin-bottom:20px;line-height:1.5;}
+  .verify-note svg{color:var(--gold);flex-shrink:0;margin-top:1px;}
+
+  /* ===================================================================
+     APP SHELL — SIDEBAR LAYOUT
+  ==================================================================== */
+  .app-shell{display:none;min-height:100vh;flex-direction:row;}
+  .app-shell.active{display:flex;}
+
+  .sidebar{
+    width:var(--sidebar-w);flex-shrink:0;
+    background:var(--navy);
+    display:flex;flex-direction:column;
+    position:sticky;top:0;height:100vh;overflow-y:auto;
+  }
+  .sb-logo{padding:22px 18px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--navy-line);}
+  .sb-logo .logo-box{width:30px;height:30px;border-radius:8px;background:var(--red);display:flex;align-items:center;justify-content:center;}
+  .sb-logo .logo-box svg{width:15px;height:15px;stroke:#fff;}
+  .sb-logo .wm{font-family:var(--font-display);font-weight:800;font-size:16px;color:#fff;}
+  .sb-logo .wm span{color:var(--red);}
+  .sb-role{margin:14px 14px 6px;background:rgba(255,255,255,.07);border-radius:10px;padding:9px 11px;display:flex;align-items:center;gap:8px;}
+  .sb-role .dot{width:7px;height:7px;border-radius:50%;background:var(--gold);flex-shrink:0;}
+  .sb-role .rl{font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.07em;}
+  .sb-section{padding:14px 14px 4px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--navy-text);}
+  .sb-link{
+    display:flex;align-items:center;gap:10px;padding:10px 14px;margin:1px 6px;border-radius:10px;
+    font-size:13.5px;font-weight:600;color:var(--navy-text);border:none;background:transparent;width:calc(100% - 12px);text-align:left;
+    transition:background .12s,color .12s;
+  }
+  .sb-link:hover{background:rgba(255,255,255,.07);color:#C8CCE0;}
+  .sb-link.is-active{background:rgba(220,38,38,.18);color:#fff;}
+  .sb-link.is-active svg{color:var(--red);}
+  .sb-link .badge-count{margin-left:auto;background:var(--red);color:#fff;font-size:10.5px;padding:2px 7px;border-radius:999px;font-weight:800;}
+  .sb-bottom{margin-top:auto;padding:14px 10px 18px;border-top:1px solid var(--navy-line);}
+  .sb-user{display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;}
+  .sb-user:hover{background:rgba(255,255,255,.06);}
+  .sb-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#D8B873);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-size:13px;color:#fff;flex-shrink:0;}
+  .sb-user-meta .u-name{font-size:13px;font-weight:700;color:#fff;}
+  .sb-user-meta .u-role{font-size:11px;color:var(--navy-text);}
+
+  /* main area */
+  .main-area{flex:1;min-width:0;display:flex;flex-direction:column;}
+  .topbar{
+    position:sticky;top:0;z-index:20;
+    background:#fff;border-bottom:1px solid var(--line);
+    padding:13px 28px;display:flex;align-items:center;justify-content:space-between;
+  }
+  .topbar .tb-left{display:flex;align-items:center;gap:14px;}
+  .topbar .tb-left h2{font-size:16px;font-weight:800;}
+  .topbar-actions{display:flex;align-items:center;gap:10px;}
+  .icon-btn{position:relative;width:36px;height:36px;border-radius:10px;border:1.5px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);}
+  .icon-btn:hover{border-color:var(--ink-faint);}
+  .icon-btn .dot{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--red);border:1.5px solid #fff;}
+
+  .page-content{padding:28px 28px 64px;}
+  .page-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px;gap:14px;flex-wrap:wrap;}
+  .page-head .eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--red);margin-bottom:5px;}
+  .page-head h1{font-size:25px;font-weight:800;}
+  .page-head .sub{color:var(--ink-soft);font-size:13.5px;margin-top:4px;}
+
+  .view{display:none;}
+  .view.active{display:block;}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);}
+
+  /* stat grid */
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:26px;}
+  .stat-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius-md);padding:18px 18px;position:relative;overflow:hidden;}
+  .stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius-md) var(--radius-md) 0 0;}
+  .stat-card.c-red::after{background:var(--red);}
+  .stat-card.c-green::after{background:var(--green);}
+  .stat-card.c-blue::after{background:var(--blue);}
+  .stat-card.c-gold::after{background:var(--gold);}
+  .stat-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;}
+  .stat-label{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .stat-value{font-family:var(--font-display);font-weight:800;font-size:24px;line-height:1;}
+  .stat-foot{font-size:12px;color:var(--ink-faint);margin-top:6px;}
+  .stat-trend{display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:99px;margin-top:8px;}
+  .trend-up{background:var(--green-wash);color:var(--green);}
+  .trend-down{background:var(--red-wash);color:var(--red);}
+
+  /* ---- property card ---- */
+  .prop-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  .prop-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);overflow:hidden;}
+  .prop-thumb{height:130px;display:flex;align-items:center;justify-content:center;position:relative;}
+  .prop-thumb .status-dot{position:absolute;top:12px;right:12px;}
+  .prop-body{padding:16px 18px 18px;}
+  .prop-title{font-family:var(--font-display);font-weight:800;font-size:14.5px;margin-bottom:3px;}
+  .prop-sub{font-size:12.5px;color:var(--ink-soft);margin-bottom:11px;display:flex;align-items:center;gap:5px;}
+  .prop-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 0;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);margin-bottom:12px;}
+  .ps-item .ps-label{font-size:10.5px;color:var(--ink-faint);font-weight:700;text-transform:uppercase;letter-spacing:.05em;}
+  .ps-item .ps-val{font-family:var(--font-mono);font-weight:600;font-size:14px;margin-top:2px;}
+  .prop-actions{display:flex;gap:8px;}
+
+  /* ---- requests table ---- */
+  .req-list{display:flex;flex-direction:column;gap:0;}
+  .req-row{display:flex;align-items:center;gap:16px;padding:16px 20px;border-bottom:1px solid var(--line-soft);}
+  .req-row:last-child{border-bottom:none;}
+  .req-av{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-size:14px;color:#fff;flex-shrink:0;}
+  .req-info{flex:1;min-width:0;}
+  .req-name{font-weight:700;font-size:14px;}
+  .req-detail{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+  .req-meta{text-align:right;flex-shrink:0;}
+  .req-date{font-size:12px;color:var(--ink-faint);}
+  .req-actions{display:flex;gap:8px;margin-top:8px;justify-content:flex-end;}
+  .btn-approve{background:var(--green-wash);color:var(--green);border:none;border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:700;font-family:var(--font-display);}
+  .btn-approve:hover{background:var(--green);color:#fff;}
+  .btn-reject{background:var(--red-wash);color:var(--red);border:none;border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:700;font-family:var(--font-display);}
+  .btn-reject:hover{background:var(--red);color:#fff;}
+
+  /* ---- income ---- */
+  .income-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:22px;align-items:flex-start;}
+  .income-chart{padding:24px 24px 20px;}
+  .chart-bars{display:flex;align-items:flex-end;gap:12px;height:130px;margin:20px 0 8px;}
+  .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .bar-fill{width:100%;border-radius:8px 8px 0 0;min-height:8px;transition:opacity .2s;}
+  .bar-fill:hover{opacity:.8;}
+  .bar-label{font-size:10.5px;color:var(--ink-faint);font-weight:600;}
+  .bar-val{font-size:10px;font-family:var(--font-mono);font-weight:600;color:var(--ink-soft);}
+  .income-side{}
+  .income-summary{padding:22px;}
+  .income-total{margin-bottom:20px;}
+  .income-total .lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-faint);margin-bottom:6px;}
+  .income-total .amt{font-family:var(--font-mono);font-weight:600;font-size:30px;}
+  .income-source{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line-soft);}
+  .income-source:last-child{border-bottom:none;}
+  .is-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+  .is-name{font-size:13.5px;font-weight:600;flex:1;}
+  .is-val{font-family:var(--font-mono);font-weight:600;font-size:13.5px;}
+
+  table.tbl{width:100%;border-collapse:collapse;}
+  table.tbl th{text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint);padding:0 18px 12px;border-bottom:1px solid var(--line);}
+  table.tbl td{padding:14px 18px;font-size:13.5px;border-bottom:1px solid var(--line-soft);color:var(--ink-soft);}
+  table.tbl td.strong{color:var(--ink);font-weight:600;}
+  table.tbl tr:last-child td{border-bottom:none;}
+
+  /* ---- tenants ---- */
+  .tenant-row{display:flex;align-items:center;gap:16px;padding:16px 20px;border-bottom:1px solid var(--line-soft);}
+  .tenant-row:last-child{border-bottom:none;}
+  .tenant-av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-size:14px;color:#fff;flex-shrink:0;}
+  .tenant-info{flex:1;}
+  .tenant-name{font-weight:700;font-size:14px;}
+  .tenant-meta{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+  .tenant-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+  .progress-mini{width:80px;height:5px;border-radius:99px;background:var(--line-soft);overflow:hidden;}
+  .progress-mini-fill{height:100%;background:linear-gradient(90deg,var(--red),var(--gold));border-radius:99px;}
+
+  /* ---- profile ---- */
+  .profile-wrap{display:grid;grid-template-columns:260px 1fr;gap:22px;align-items:flex-start;}
+  .profile-sidebar-card{padding:26px 20px;text-align:center;}
+  .prof-avatar{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#D8B873);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-size:26px;color:#fff;margin:0 auto 12px;}
+  .profile-form-card{padding:26px 26px;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;margin-bottom:20px;}
+
+  /* ---- notifications ---- */
+  .notif-list{display:flex;flex-direction:column;gap:0;}
+  .notif-item{display:flex;align-items:flex-start;gap:13px;padding:16px 20px;border-bottom:1px solid var(--line-soft);}
+  .notif-item:last-child{border-bottom:none;}
+  .notif-item.unread{background:#FEFCF8;}
+  .notif-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .notif-body{flex:1;}
+  .notif-title{font-weight:700;font-size:13.5px;}
+  .notif-sub{font-size:12.5px;color:var(--ink-soft);margin-top:2px;line-height:1.5;}
+  .notif-time{font-size:11.5px;color:var(--ink-faint);margin-top:4px;}
+  .unread-dot{width:7px;height:7px;border-radius:50%;background:var(--red);flex-shrink:0;margin-top:5px;}
+
+  @media(max-width:1020px){
+    .stat-grid{grid-template-columns:1fr 1fr;}
+    .prop-grid{grid-template-columns:1fr 1fr;}
+    .income-grid{grid-template-columns:1fr;}
+    .profile-wrap{grid-template-columns:1fr;}
+  }
+  @media(max-width:680px){
+    .sidebar{display:none;}
+    .prop-grid{grid-template-columns:1fr;}
+    .form-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     LOGIN
+============================================================= -->
+<div class="auth-view active" id="view-login">
+  <div class="auth-panel">
+    <div class="auth-logo">
+      <div class="logo-box"><svg class="ic" viewBox="0 0 24 24"><path d="M3 11.5L12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9"/></svg></div>
+      <div class="wm">APP-<span>ROOMS</span></div>
+    </div>
+    <div class="auth-role-pill"><svg class="ic" viewBox="0 0 24 24" style="width:13px;height:13px;"><path d="M3 9l9-7 9 7v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Portal de propietarios</div>
+    <h1>Inicia sesión</h1>
+    <div class="sub">Gestiona tus alojamientos y arriendos desde un solo lugar.</div>
+    <div class="field"><label>Correo electrónico <span class="req">*</span></label><input type="email" value="maria.gutierrez@gmail.com" placeholder="correo@email.com"></div>
+    <div class="field field-pw"><label>Contraseña <span class="req">*</span></label><input type="password" value="••••••••"><svg class="ic" viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg></div>
+    <div class="terms">Al iniciar sesión aceptas los <a href="#">Términos de uso</a> y la <a href="#">Política de privacidad</a> de APP-ROOMS.</div>
+    <button class="btn btn-primary btn-block" onclick="enterApp()">Ingresar a mi cuenta</button>
+    <div class="auth-footer"><a onclick="showReg()">Crear una cuenta como propietario</a> · <a href="#">Olvidé mi contraseña</a></div>
+  </div>
+  <div class="auth-visual">
+    <div class="auth-visual-inner">
+      <h2>Publica, gestiona y cobra — todo en APP-ROOMS</h2>
+      <p>Miles de estudiantes buscan alojamiento cerca de su universidad. Ponemos tu propiedad frente a ellos.</p>
+      <div class="auth-visual-stats">
+        <div class="av-stat"><div class="n">1,200+</div><div class="l">Alojamientos publicados</div></div>
+        <div class="av-stat"><div class="n">98%</div><div class="l">Tasa de ocupación</div></div>
+        <div class="av-stat"><div class="n">4.8</div><div class="l">Calificación media</div></div>
+        <div class="av-stat"><div class="n">3 días</div><div class="l">Tiempo medio de reserva</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     REGISTER
+============================================================= -->
+<div class="auth-view" id="view-register" style="display:none;">
+  <div class="auth-panel" style="max-width:500px;flex:0 0 500px;">
+    <div class="auth-logo">
+      <div class="logo-box"><svg class="ic" viewBox="0 0 24 24"><path d="M3 11.5L12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9"/></svg></div>
+      <div class="wm">APP-<span>ROOMS</span></div>
+    </div>
+    <div class="auth-role-pill"><svg class="ic" viewBox="0 0 24 24" style="width:13px;height:13px;"><path d="M3 9l9-7 9 7v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Z"/></svg> Registro de propietario</div>
+    <h1 id="reg-title">Datos de la cuenta</h1>
+    <div class="sub" id="reg-sub">Empieza a publicar en menos de 5 minutos.</div>
+    <div class="steps-row">
+      <div class="step-dot is-active" id="dot-1">1</div>
+      <div class="step-line" id="line-12"></div>
+      <div class="step-dot" id="dot-2">2</div>
+      <div class="step-line" id="line-23"></div>
+      <div class="step-dot" id="dot-3">3</div>
+    </div>
+
+    <div id="reg-s1">
+      <div class="field"><label>Nombre completo <span class="req">*</span></label><input placeholder="María Gutiérrez"></div>
+      <div class="field"><label>Correo electrónico <span class="req">*</span></label><input placeholder="correo@email.com"></div>
+      <div class="field"><label>Teléfono <span class="req">*</span></label><input placeholder="+51 987 000 000"></div>
+      <div class="field field-pw"><label>Contraseña <span class="req">*</span></label><input type="password" placeholder="Mínimo 8 caracteres"></div>
+      <button class="btn btn-primary btn-block" onclick="regStep(2)">Continuar</button>
+    </div>
+
+    <div id="reg-s2" style="display:none;">
+      <div class="verify-note"><svg class="ic" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> Verificamos tu identidad con <strong>Truora</strong> para proteger a los estudiantes que se alojaran contigo.</div>
+      <div class="upload-box"><svg class="ic" viewBox="0 0 24 24" style="width:28px;height:28px;display:block;margin:0 auto;color:var(--ink-faint);"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M5 20h14"/></svg><div class="ub-title">Sube tu DNI o documento de identidad</div><div class="ub-sub">JPG, PNG o PDF · máx. 5 MB</div></div>
+      <div class="field"><label>Número de DNI <span class="req">*</span></label><input placeholder="12345678"></div>
+      <button class="btn btn-primary btn-block" onclick="regStep(3)">Verificar identidad</button>
+      <button class="btn btn-ghost btn-block" style="margin-top:10px;" onclick="regStep(1)">Atrás</button>
+    </div>
+
+    <div id="reg-s3" style="display:none;">
+      <div class="verify-note"><svg class="ic" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Z"/></svg> Cuéntanos sobre el tipo de propiedad que publicarás. Siempre puedes agregar más después.</div>
+      <div class="field"><label>Tipo de propiedad <span class="req">*</span></label><select><option>Casa o departamento completo</option><option>Habitaciones dentro de mi vivienda</option><option>Inmueble exclusivo para arriendo</option></select></div>
+      <div class="field"><label>¿Cuántos cuartos tienes disponibles? <span class="req">*</span></label><select><option>1 cuarto</option><option>2 cuartos</option><option>3 cuartos</option><option>4 o más</option></select></div>
+      <div class="field"><label>Distrito <span class="req">*</span></label><select><option>San Miguel</option><option>Pueblo Libre</option><option>Jesús María</option><option>Surco</option><option>Miraflores</option></select></div>
+      <button class="btn btn-primary btn-block" onclick="enterApp()">Crear mi cuenta</button>
+      <button class="btn btn-ghost btn-block" style="margin-top:10px;" onclick="regStep(2)">Atrás</button>
+    </div>
+
+    <div class="auth-footer" style="margin-top:16px;"><a onclick="showLogin()">Ya tengo cuenta — Iniciar sesión</a></div>
+  </div>
+  <div class="auth-visual">
+    <div class="auth-visual-inner">
+      <h2>Tu primera publicación puede estar activa hoy mismo</h2>
+      <p>Miles de universitarios buscan cuarto cada semestre. Con APP-ROOMS tu propiedad llega a los inquilinos correctos.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     APP SHELL
+============================================================= -->
+<div class="app-shell" id="app-shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <div class="logo-box"><svg class="ic" viewBox="0 0 24 24"><path d="M3 11.5L12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9"/></svg></div>
+      <div class="wm">APP-<span>ROOMS</span></div>
+    </div>
+    <div class="sb-role"><div class="dot"></div><div class="rl">Portal Propietario</div></div>
+
+    <div class="sb-section">Plataforma</div>
+    <button class="sb-link is-active" id="link-dashboard" onclick="showPage('page-dashboard',this)"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg> Dashboard</button>
+    <button class="sb-link" id="link-alojamientos" onclick="showPage('page-alojamientos',this)"><svg class="ic" viewBox="0 0 24 24"><path d="M3 11.5L12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9"/></svg> Mis alojamientos</button>
+
+    <div class="sb-section">Gestión</div>
+    <button class="sb-link" id="link-solicitudes" onclick="showPage('page-solicitudes',this)"><svg class="ic" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> Solicitudes <span class="badge-count">3</span></button>
+    <button class="sb-link" id="link-inquilinos" onclick="showPage('page-inquilinos',this)"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg> Mis inquilinos</button>
+
+    <div class="sb-section">Finanzas</div>
+    <button class="sb-link" id="link-ingresos" onclick="showPage('page-ingresos',this)"><svg class="ic" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Ingresos</button>
+
+    <div class="sb-section">Cuenta</div>
+    <button class="sb-link" id="link-perfil" onclick="showPage('page-perfil',this)"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg> Mi perfil</button>
+
+    <div class="sb-bottom">
+      <div class="sb-user">
+        <div class="sb-avatar">MG</div>
+        <div class="sb-user-meta">
+          <div class="u-name">María Gutiérrez</div>
+          <div class="u-role">Propietaria verificada</div>
+        </div>
+      </div>
+      <button class="sb-link" style="width:100%;margin-top:4px;" onclick="showLogin()"><svg class="ic" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Cerrar sesión</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-area">
+    <div class="topbar">
+      <div class="tb-left"><h2 id="topbar-title">Centro de operaciones</h2></div>
+      <div class="topbar-actions">
+        <div class="icon-btn"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div>
+        <div class="icon-btn"><svg class="ic" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="dot"></span></div>
+        <button class="btn btn-primary btn-sm" onclick="showPage('page-alojamientos',document.getElementById('link-alojamientos'))"><svg class="ic" viewBox="0 0 24 24" style="stroke:#fff;width:15px;height:15px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Publicar cuarto</button>
+      </div>
+    </div>
+
+    <!-- =================== DASHBOARD =================== -->
+    <div class="view active page-content" id="page-dashboard">
+      <div class="page-head">
+        <div><div class="eyebrow">Centro de operaciones</div><h1>Bienvenida de nuevo, María</h1><div class="sub">Resumen de tus alojamientos y actividad reciente.</div></div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card c-red">
+          <div class="stat-icon" style="background:var(--red-wash);"><svg class="ic" viewBox="0 0 24 24" style="color:var(--red);"><path d="M3 11.5L12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9"/></svg></div>
+          <div class="stat-label">Cuartos activos</div>
+          <div class="stat-value">4</div>
+          <div class="stat-foot">3 ocupados · 1 disponible</div>
+          <div class="stat-trend trend-up">↑ +1 este mes</div>
+        </div>
+        <div class="stat-card c-green">
+          <div class="stat-icon" style="background:var(--green-wash);"><svg class="ic" viewBox="0 0 24 24" style="color:var(--green);"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+          <div class="stat-label">Ingresos del mes</div>
+          <div class="stat-value mono">S/ 2,550</div>
+          <div class="stat-foot">Junio 2026</div>
+          <div class="stat-trend trend-up">↑ +S/ 300 vs mayo</div>
+        </div>
+        <div class="stat-card c-blue">
+          <div class="stat-icon" style="background:var(--blue-wash);"><svg class="ic" viewBox="0 0 24 24" style="color:var(--blue);"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+          <div class="stat-label">Solicitudes pendientes</div>
+          <div class="stat-value">3</div>
+          <div class="stat-foot">Por revisar hoy</div>
+          <div class="stat-trend trend-down">↑ Requieren atención</div>
+        </div>
+        <div class="stat-card c-gold">
+          <div class="stat-icon" style="background:var(--gold-wash);"><svg class="ic" viewBox="0 0 24 24" style="color:var(--gold);"><path d="M12 2l3 6.6 7.2.9-5.3 5 1.4 7.1L12 18l-6.3 3.6L7.1 14.5 1.8 9.5l7.2-.9L12 2Z"/></svg></div>
+          <div class="stat-label">Tu calificación</div>
+          <div class="stat-value">4.9 <span style="font-size:15px;color:var(--ink-faint);">/ 5</span></div>
+          <div class="stat-foot">Promedio de reseñas</div>
+          <div class="stat-trend trend-up">↑ +0.1 vs el trimestre pasado</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1.35fr 1fr;gap:22px;">
+        <div>
+          <div style="font-family:var(--font-display);font-weight:800;font-size:14.5px;margin-bottom:14px;display:flex;align-items:center;gap:8px;"><svg class="ic" viewBox="0 0 24 24" style="color:var(--red);"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> Nuevas solicitudes</div>
+          <div class="card" style="margin-bottom:22px;">
+            <div class="req-list">
+
+              <div class="req-row">
+                <div class="req-av" style="background:linear-gradient(135deg,var(--blue),#6E97F4);">CR</div>
+                <div class="req-info">
+                  <div class="req-name">Camila Ríos</div>
+                  <div class="req-detail">PUCP · Ing. Industrial · Cuarto 1 — Pueblo Libre</div>
+                </div>
+                <div class="req-meta">
+                  <div class="req-date">Hace 2 horas</div>
+                  <div class="req-actions">
+                    <button class="btn-approve">Aprobar</button>
+                    <button class="btn-reject">Rechazar</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="req-row">
+                <div class="req-av" style="background:linear-gradient(135deg,var(--green),#5FCB89);">JL</div>
+                <div class="req-info">
+                  <div class="req-name">José López</div>
+                  <div class="req-detail">Universidad de Lima · Derecho · Cuarto 1 — Pueblo Libre</div>
+                </div>
+                <div class="req-meta">
+                  <div class="req-date">Hace 5 horas</div>
+                  <div class="req-actions">
+                    <button class="btn-approve">Aprobar</button>
+                    <button class="btn-reject">Rechazar</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="req-row">
+                <div class="req-av" style="background:linear-gradient(135deg,var(--amber),#F0AE5C);">AS</div>
+                <div class="req-info">
+                  <div class="req-name">Ana Suárez</div>
+                  <div class="req-detail">UPC · Administración · Cuarto 2 — Pueblo Libre</div>
+                </div>
+                <div class="req-meta">
+                  <div class="req-date">Ayer</div>
+                  <div class="req-actions">
+                    <button class="btn-approve">Aprobar</button>
+                    <button class="btn-reject">Rechazar</button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div style="font-family:var(--font-display);font-weight:800;font-size:14.5px;margin-bottom:14px;display:flex;align-items:center;gap:8px;"><svg class="ic" viewBox="0 0 24 24" style="color:var(--red);"><rect x="2" y="5" width="20" height="14" rx="2.5"/><path d="M2 10h20"/></svg> Pagos recientes</div>
+          <div class="card" style="padding:6px 0 16px;">
+            <table class="tbl">
+              <thead><tr><th>Inquilino</th><th>Cuarto</th><th>Monto</th><th>Estado</th></tr></thead>
+              <tbody>
+                <tr><td class="strong">Luis Vargas</td><td>Cuarto 3</td><td class="mono strong">S/ 750</td><td><span class="badge badge-green">Recibido</span></td></tr>
+                <tr><td class="strong">Ana Suárez</td><td>Cuarto 2</td><td class="mono strong">S/ 900</td><td><span class="badge badge-green">Recibido</span></td></tr>
+                <tr><td class="strong">Pedro Ruiz</td><td>Cuarto 4</td><td class="mono strong">S/ 850</td><td><span class="badge badge-amber">Pendiente</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- right: quick actions + availability -->
+        <div>
+          <div style="font-family:var(--font-display);font-weight:800;font-size:14.5px;margin-bottom:14px;display:flex;align-items:center;gap:8px;"><svg class="ic" viewBox="0 0 24 24" style="color:var(--red);"><path d="M3 11.5L12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9"/></svg> Estado de cuartos</div>
+          <div class="card" style="padding:8px 0 16px;margin-bottom:22px;">
+            <div class="tenant-row">
+              <div class="tenant-av" style="background:linear-gradient(135deg,var(--blue),#6E97F4);">C1</div>
+              <div class="tenant-info"><div class="tenant-name">Cuarto 1 — Pueblo Libre</div><div class="tenant-meta">Camila Ríos · S/ 850 / mes</div></div>
+              <div><span class="badge badge-green">Ocupado</span></div>
+            </div>
+            <div class="tenant-row">
+              <div class="tenant-av" style="background:linear-gradient(135deg,var(--teal),#4FCBDA);">C2</div>
+              <div class="tenant-info"><div class="tenant-name">Cuarto 2 — Pueblo Libre</div><div class="tenant-meta">Ana Suárez · S/ 900 / mes</div></div>
+              <div><span class="badge badge-green">Ocupado</span></div>
+            </div>
+            <div class="tenant-row">
+              <div class="tenant-av" style="background:linear-gradient(135deg,var(--amber),#F0AE5C);">C3</div>
+              <div class="tenant-info"><div class="tenant-name">Cuarto 3 — Jesús María</div><div class="tenant-meta">Luis Vargas · S/ 750 / mes</div></div>
+              <div><span class="badge badge-green">Ocupado</span></div>
+            </div>
+            <div class="tenant-row">
+              <div class="tenant-av" style="background:var(--line-soft);color:var(--ink-faint);">C4</div>
+              <div class="tenant-info"><div class="tenant-name">Cuarto 4 — San Miguel</div><div class="tenant-meta">Sin inquilino asignado</div></div>
+              <div><span class="badge badge-amber">Disponible</span></div>
+            </div>
+          </div>
+
+          <div style="font-family:var(--font-display);font-weight:800;font-size:14.5px;margin-bottom:14px;display:flex;align-items:center;gap:8px;"><svg class="ic" viewBox="0 0 24 24" style="color:var(--red);"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/></svg> Notificaciones</div>
+          <div class="card">
+            <div class="notif-item unread">
+              <div class="notif-icon" style="background:var(--blue-wash);"><svg class="ic" viewBox="0 0 24 24" style="color:var(--blue);"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+              <div class="notif-body"><div class="notif-title">Nueva solicitud de Camila Ríos</div><div class="notif-sub">Solicita el Cuarto 1 desde el 15 de julio.</div><div class="notif-time">Hace 2 horas</div></div>
+              <div class="unread-dot"></div>
+            </div>
+            <div class="notif-item unread">
+              <div class="notif-icon" style="background:var(--green-wash);"><svg class="ic" viewBox="0 0 24 24" style="color:var(--green);"><rect x="2" y="5" width="20" height="14" rx="2.5"/><path d="M2 10h20"/></svg></div>
+              <div class="notif-body"><div class="notif-title">Pago recibido de Luis Vargas</div><div class="notif-sub">S/ 750 — cuota de junio confirmada.</div><div class="notif-time">Hace 4 horas</div></div>
+              <div class="unread-dot"></div>
+            </div>
+            <div class="notif-item">
+              <div class="notif-icon" style="background:var(--amber-wash);"><svg class="ic" viewBox="0 0 24 24" style="color:var(--amber);"><path d="M10.3 3.9 2.6 17a1.6 1.6 0 0 0 1.4 2.4h16a1.6 1.6 0 0 0 1.4-2.4L13.7 3.9a1.6 1.6 0 0 0-2.8 0Z"/><path d="M12 9v4M12 16h.01"/></svg></div>
+              <div class="notif-body"><div class="notif-title">Pago pendiente de Pedro Ruiz</div><div class="notif-sub">Cuota de julio vence en 5 días.</div><div class="notif-time">Ayer</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =================== ALOJAMIENTOS =================== -->
+    <div class="view page-content" id="page-alojamientos">
+      <div class="page-head">
+        <div><div class="eyebrow">Mis alojamientos</div><h1>Tus cuartos publicados</h1><div class="sub">Gestiona el estado, precio y detalles de cada uno.</div></div>
+        <button class="btn btn-primary"><svg class="ic" viewBox="0 0 24 24" style="stroke:#fff;width:15px;height:15px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Agregar cuarto</button>
+      </div>
+
+      <div class="prop-grid">
+
+        <div class="prop-card">
+          <div class="prop-thumb" style="background:linear-gradient(135deg,var(--blue),#7BA0F6);">
+            <svg viewBox="0 0 24 24" stroke="#fff" fill="none" stroke-width="1.6" style="width:38px;height:38px;"><path d="M3 11.5L12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9"/></svg>
+            <div class="status-dot"><span class="badge badge-green">Ocupado</span></div>
+          </div>
+          <div class="prop-body">
+            <div class="prop-title">Cuarto 1 · Pueblo Libre</div>
+            <div class="prop-sub"><svg class="ic" viewBox="0 0 24 24" style="width:12px;height:12px;"><path d="M12 22s8-4.5 8-11a8 8 0 1 0-16 0c0 6.5 8 11 8 11Z"/><circle cx="12" cy="11" r="3"/></svg> Jr. Cantuarias 240 · Hab. privada</div>
+            <div class="prop-stats">
+              <div class="ps-item"><div class="ps-label">Renta mensual</div><div class="ps-val mono">S/ 850</div></div>
+              <div class="ps-item"><div class="ps-label">Inquilina actual</div><div class="ps-val">Camila R.</div></div>
+              <div class="ps-item"><div class="ps-label">Calificación</div><div class="ps-val">4.8 ★</div></div>
+              <div class="ps-item"><div class="ps-label">Contrato hasta</div><div class="ps-val">nov 2026</div></div>
+            </div>
+            <div class="prop-actions">
+              <button class="btn btn-ghost btn-sm">Editar</button>
+              <button class="btn btn-dark btn-sm">Ver detalle</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="prop-card">
+          <div class="prop-thumb" style="background:linear-gradient(135deg,var(--teal),#4FCBDA);">
+            <svg viewBox="0 0 24 24" stroke="#fff" fill="none" stroke-width="1.6" style="width:38px;height:38px;"><rect x="4" y="9" width="16" height="11" rx="1.5"/><path d="M8 9V6a4 4 0 0 1 8 0v3"/></svg>
+            <div class="status-dot"><span class="badge badge-green">Ocupado</span></div>
+          </div>
+          <div class="prop-body">
+            <div class="prop-title">Cuarto 2 · Pueblo Libre</div>
+            <div class="prop-sub"><svg class="ic" viewBox="0 0 24 24" style="width:12px;height:12px;"><path d="M12 22s8-4.5 8-11a8 8 0 1 0-16 0c0 6.5 8 11 8 11Z"/><circle cx="12" cy="11" r="3"/></svg> Jr. Cantuarias 240 · Hab. privada</div>
+            <div class="prop-stats">
+              <div class="ps-item"><div class="ps-label">Renta mensual</div><div class="ps-val mono">S/ 900</div></div>
+              <div class="ps-item"><div class="ps-label">Inquilina actual</div><div class="ps-val">Ana S.</div></div>
+              <div class="ps-item"><div class="ps-label">Calificación</div><div class="ps-val">5.0 ★</div></div>
+              <div class="ps-item"><div class="ps-label">Contrato hasta</div><div class="ps-val">dic 2026</div></div>
+            </div>
+            <div class="prop-actions">
+              <button class="btn btn-ghost btn-sm">Editar</button>
+              <button class="btn btn-dark btn-sm">Ver detalle</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="prop-card">
+          <div class="prop-thumb" style="background:linear-gradient(135deg,var(--amber),#F0AE5C);">
+            <svg viewBox="0 0 24 24" stroke="#fff" fill="none" stroke-width="1.6" style="width:38px;height:38px;"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg>
+            <div class="status-dot"><span class="badge badge-green">Ocupado</span></div>
+          </div>
+          <div class="prop-body">
+            <div class="prop-title">Cuarto 3 · Jesús María</div>
+            <div class="prop-sub"><svg class="ic" viewBox="0 0 24 24" style="width:12px;height:12px;"><path d="M12 22s8-4.5 8-11a8 8 0 1 0-16 0c0 6.5 8 11 8 11Z"/><circle cx="12" cy="11" r="3"/></svg> Jr. Risso 540 · Hab. compartida</div>
+            <div class="prop-stats">
+              <div class="ps-item"><div class="ps-label">Renta mensual</div><div class="ps-val mono">S/ 750</div></div>
+              <div class="ps-item"><div class="ps-label">Inquilino actual</div><div class="ps-val">Luis V.</div></div>
+              <div class="ps-item"><div class="ps-label">Calificación</div><div class="ps-val">4.7 ★</div></div>
+              <div class="ps-item"><div class="ps-label">Contrato hasta</div><div class="ps-val">oct 2026</div></div>
+            </div>
+            <div class="prop-actions">
+              <button class="btn btn-ghost btn-sm">Editar</button>
+              <button class="btn btn-dark btn-sm">Ver detalle</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="prop-card" style="border:1.5px dashed var(--line);background:transparent;box-shadow:none;display:flex;align-items:center;justify-content:center;min-height:280px;">
+          <div style="text-align:center;padding:30px;">
+            <div style="width:52px;height:52px;border-radius:16px;background:var(--red-wash);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;"><svg class="ic" viewBox="0 0 24 24" style="color:var(--red);width:22px;height:22px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+            <div style="font-weight:800;font-size:14.5px;margin-bottom:4px;">Publicar nuevo cuarto</div>
+            <div style="font-size:12.5px;color:var(--ink-faint);margin-bottom:16px;">Tarda menos de 3 minutos</div>
+            <button class="btn btn-primary btn-sm">Empezar publicación</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- =================== SOLICITUDES =================== -->
+    <div class="view page-content" id="page-solicitudes">
+      <div class="page-head">
+        <div><div class="eyebrow">Solicitudes</div><h1>Solicitudes de alojamiento</h1><div class="sub">Revisa y responde a cada estudiante interesado.</div></div>
+        <div style="display:flex;gap:10px;">
+          <span class="badge badge-amber" style="padding:8px 14px;font-size:12.5px;">3 pendientes</span>
+          <span class="badge badge-green" style="padding:8px 14px;font-size:12.5px;">2 aprobadas este mes</span>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:22px;">
+        <div style="padding:16px 20px 0;font-weight:800;font-size:14px;color:var(--ink-soft);letter-spacing:.05em;text-transform:uppercase;font-size:11px;">Pendientes de respuesta</div>
+        <div class="req-list">
+          <div class="req-row">
+            <div class="req-av" style="background:linear-gradient(135deg,var(--blue),#6E97F4);">CR</div>
+            <div class="req-info">
+              <div class="req-name">Camila Ríos — PUCP, Ingeniería Industrial</div>
+              <div class="req-detail">Solicita Cuarto 1 · Pueblo Libre · Desde 15 jul 2026 · 12 meses</div>
+            </div>
+            <div class="req-meta">
+              <div class="req-date">Hace 2 horas</div>
+              <div class="req-actions"><button class="btn-approve">✓ Aprobar</button><button class="btn-reject">✕ Rechazar</button></div>
+            </div>
+          </div>
+          <div class="req-row">
+            <div class="req-av" style="background:linear-gradient(135deg,var(--green),#5FCB89);">JL</div>
+            <div class="req-info">
+              <div class="req-name">José López — Universidad de Lima, Derecho</div>
+              <div class="req-detail">Solicita Cuarto 1 · Pueblo Libre · Desde 1 ago 2026 · 6 meses</div>
+            </div>
+            <div class="req-meta">
+              <div class="req-date">Hace 5 horas</div>
+              <div class="req-actions"><button class="btn-approve">✓ Aprobar</button><button class="btn-reject">✕ Rechazar</button></div>
+            </div>
+          </div>
+          <div class="req-row">
+            <div class="req-av" style="background:linear-gradient(135deg,var(--amber),#F0AE5C);">AS</div>
+            <div class="req-info">
+              <div class="req-name">Ana Suárez — UPC, Administración</div>
+              <div class="req-detail">Solicita Cuarto 2 · Pueblo Libre · Desde 20 jul 2026 · 12 meses</div>
+            </div>
+            <div class="req-meta">
+              <div class="req-date">Ayer</div>
+              <div class="req-actions"><button class="btn-approve">✓ Aprobar</button><button class="btn-reject">✕ Rechazar</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="padding:6px 0 16px;">
+        <div style="padding:16px 20px 6px;font-weight:800;font-size:14px;">Historial de solicitudes</div>
+        <table class="tbl">
+          <thead><tr><th>Estudiante</th><th>Universidad</th><th>Cuarto</th><th>Fecha</th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr><td class="strong">Pedro Ruiz</td><td>PUCP</td><td>Cuarto 4</td><td>10 jun 2026</td><td><span class="badge badge-green">Aprobado</span></td></tr>
+            <tr><td class="strong">Luis Vargas</td><td>U. del Pacífico</td><td>Cuarto 3</td><td>02 may 2026</td><td><span class="badge badge-green">Aprobado</span></td></tr>
+            <tr><td class="strong">Sofía Castro</td><td>UPC</td><td>Cuarto 1</td><td>10 abr 2026</td><td><span class="badge badge-red">Rechazado</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- =================== INQUILINOS =================== -->
+    <div class="view page-content" id="page-inquilinos">
+      <div class="page-head">
+        <div><div class="eyebrow">Mis inquilinos</div><h1>Inquilinos actuales</h1><div class="sub">Seguimiento de contratos y pagos de cada inquilino.</div></div>
+      </div>
+
+      <div class="card" style="margin-bottom:22px;">
+        <div class="tenant-row" style="background:var(--paper);border-radius:var(--radius-lg) var(--radius-lg) 0 0;">
+          <div style="width:44px;"></div>
+          <div class="tenant-info" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0;"><strong>Inquilino</strong><strong>Cuarto</strong><strong>Contrato</strong><strong>Pago mes actual</strong></div>
+        </div>
+
+        <div class="tenant-row">
+          <div class="tenant-av" style="background:linear-gradient(135deg,var(--blue),#6E97F4);">CR</div>
+          <div class="tenant-info" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0;align-items:center;">
+            <div><div class="tenant-name">Camila Ríos</div><div class="tenant-meta">PUCP · Ing. Industrial</div></div>
+            <div style="font-size:13.5px;font-weight:600;">Cuarto 1 · Pueblo Libre</div>
+            <div>
+              <div style="font-size:12.5px;color:var(--ink-soft);">13 may — 30 nov 2026</div>
+              <div class="progress-mini" style="margin-top:5px;"><div class="progress-mini-fill" style="width:62%;"></div></div>
+            </div>
+            <div><span class="badge badge-green">S/ 850 — Pagado</span></div>
+          </div>
+          <div class="tenant-right"><button class="btn btn-ghost btn-sm">Ver detalles</button></div>
+        </div>
+
+        <div class="tenant-row">
+          <div class="tenant-av" style="background:linear-gradient(135deg,var(--teal),#4FCBDA);">AS</div>
+          <div class="tenant-info" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0;align-items:center;">
+            <div><div class="tenant-name">Ana Suárez</div><div class="tenant-meta">UPC · Administración</div></div>
+            <div style="font-size:13.5px;font-weight:600;">Cuarto 2 · Pueblo Libre</div>
+            <div>
+              <div style="font-size:12.5px;color:var(--ink-soft);">01 jun — 31 dic 2026</div>
+              <div class="progress-mini" style="margin-top:5px;"><div class="progress-mini-fill" style="width:42%;"></div></div>
+            </div>
+            <div><span class="badge badge-green">S/ 900 — Pagado</span></div>
+          </div>
+          <div class="tenant-right"><button class="btn btn-ghost btn-sm">Ver detalles</button></div>
+        </div>
+
+        <div class="tenant-row">
+          <div class="tenant-av" style="background:linear-gradient(135deg,var(--amber),#F0AE5C);">LV</div>
+          <div class="tenant-info" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0;align-items:center;">
+            <div><div class="tenant-name">Luis Vargas</div><div class="tenant-meta">U. del Pacífico · Economía</div></div>
+            <div style="font-size:13.5px;font-weight:600;">Cuarto 3 · Jesús María</div>
+            <div>
+              <div style="font-size:12.5px;color:var(--ink-soft);">10 may — 10 oct 2026</div>
+              <div class="progress-mini" style="margin-top:5px;"><div class="progress-mini-fill" style="width:55%;"></div></div>
+            </div>
+            <div><span class="badge badge-green">S/ 750 — Pagado</span></div>
+          </div>
+          <div class="tenant-right"><button class="btn btn-ghost btn-sm">Ver detalles</button></div>
+        </div>
+
+        <div class="tenant-row">
+          <div class="tenant-av" style="background:linear-gradient(135deg,var(--purple),#A57BF5);">PR</div>
+          <div class="tenant-info" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0;align-items:center;">
+            <div><div class="tenant-name">Pedro Ruiz</div><div class="tenant-meta">PUCP · Arquitectura</div></div>
+            <div style="font-size:13.5px;font-weight:600;">Cuarto 4 · San Miguel</div>
+            <div>
+              <div style="font-size:12.5px;color:var(--ink-soft);">15 jun — 15 dic 2026</div>
+              <div class="progress-mini" style="margin-top:5px;"><div class="progress-mini-fill" style="width:28%;"></div></div>
+            </div>
+            <div><span class="badge badge-amber">S/ 850 — Pendiente</span></div>
+          </div>
+          <div class="tenant-right"><button class="btn btn-ghost btn-sm">Ver detalles</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =================== INGRESOS =================== -->
+    <div class="view page-content" id="page-ingresos">
+      <div class="page-head">
+        <div><div class="eyebrow">Finanzas</div><h1>Ingresos</h1><div class="sub">Ingresos recibidos y proyección de cobros.</div></div>
+        <button class="btn btn-ghost btn-sm"><svg class="ic" viewBox="0 0 24 24" style="width:15px;height:15px;"><path d="M12 16V4M7 11l5 5 5-5"/><path d="M5 20h14"/></svg> Exportar reporte</button>
+      </div>
+
+      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:26px;">
+        <div class="stat-card c-green">
+          <div class="stat-icon" style="background:var(--green-wash);"><svg class="ic" viewBox="0 0 24 24" style="color:var(--green);"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+          <div class="stat-label">Ingreso mensual</div>
+          <div class="stat-value mono">S/ 2,550</div>
+          <div class="stat-foot">3 de 4 pagos recibidos</div>
+          <div class="stat-trend trend-up">↑ +S/ 300 vs mayo</div>
+        </div>
+        <div class="stat-card c-blue">
+          <div class="stat-icon" style="background:var(--blue-wash);"><svg class="ic" viewBox="0 0 24 24" style="color:var(--blue);"><rect x="3" y="4" width="18" height="18" rx="2.5"/><path d="M8 2v4M16 2v4M3 10h18"/></svg></div>
+          <div class="stat-label">Ingreso proyectado</div>
+          <div class="stat-value mono">S/ 3,400</div>
+          <div class="stat-foot">Cuando Pedro Ruiz pague</div>
+        </div>
+        <div class="stat-card c-gold">
+          <div class="stat-icon" style="background:var(--gold-wash);"><svg class="ic" viewBox="0 0 24 24" style="color:var(--gold);"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+          <div class="stat-label">Acumulado 2026</div>
+          <div class="stat-value mono">S/ 10,250</div>
+          <div class="stat-foot">Ene – jun 2026</div>
+        </div>
+      </div>
+
+      <div class="income-grid">
+        <div class="income-chart card">
+          <div style="font-weight:800;font-size:14.5px;margin-bottom:4px;">Ingresos mensuales</div>
+          <div style="font-size:12.5px;color:var(--ink-soft);">Últimos 6 meses</div>
+          <div class="chart-bars">
+            <div class="bar-col"><div class="bar-val">1,850</div><div class="bar-fill" style="height:55%;background:linear-gradient(180deg,var(--blue),#6E97F4);"></div><div class="bar-label">Ene</div></div>
+            <div class="bar-col"><div class="bar-val">1,850</div><div class="bar-fill" style="height:55%;background:linear-gradient(180deg,var(--blue),#6E97F4);"></div><div class="bar-label">Feb</div></div>
+            <div class="bar-col"><div class="bar-val">2,100</div><div class="bar-fill" style="height:64%;background:linear-gradient(180deg,var(--blue),#6E97F4);"></div><div class="bar-label">Mar</div></div>
+            <div class="bar-col"><div class="bar-val">2,100</div><div class="bar-fill" style="height:64%;background:linear-gradient(180deg,var(--blue),#6E97F4);"></div><div class="bar-label">Abr</div></div>
+            <div class="bar-col"><div class="bar-val">2,250</div><div class="bar-fill" style="height:68%;background:linear-gradient(180deg,var(--blue),#6E97F4);"></div><div class="bar-label">May</div></div>
+            <div class="bar-col"><div class="bar-val">2,550</div><div class="bar-fill" style="height:78%;background:linear-gradient(180deg,var(--red),var(--gold));"></div><div class="bar-label">Jun</div></div>
+          </div>
+          <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line-soft);">
+            <table class="tbl">
+              <thead><tr><th>Inquilino</th><th>Cuarto</th><th>Monto</th><th>Fecha</th><th>Estado</th></tr></thead>
+              <tbody>
+                <tr><td class="strong">Camila Ríos</td><td>Cuarto 1</td><td class="mono strong">S/ 850</td><td>15 jun</td><td><span class="badge badge-green">Recibido</span></td></tr>
+                <tr><td class="strong">Ana Suárez</td><td>Cuarto 2</td><td class="mono strong">S/ 900</td><td>14 jun</td><td><span class="badge badge-green">Recibido</span></td></tr>
+                <tr><td class="strong">Luis Vargas</td><td>Cuarto 3</td><td class="mono strong">S/ 750</td><td>13 jun</td><td><span class="badge badge-green">Recibido</span></td></tr>
+                <tr><td class="strong">Pedro Ruiz</td><td>Cuarto 4</td><td class="mono strong">S/ 850</td><td>— julio</td><td><span class="badge badge-amber">Pendiente</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div>
+          <div class="income-summary card">
+            <div class="income-total">
+              <div class="lbl">Total recibido · junio</div>
+              <div class="amt">S/ 2,550</div>
+            </div>
+            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-faint);margin-bottom:10px;">Por cuarto</div>
+            <div class="income-source"><div class="is-dot" style="background:var(--blue);"></div><div class="is-name">Cuarto 1 · Pueblo Libre</div><div class="is-val mono">S/ 850</div></div>
+            <div class="income-source"><div class="is-dot" style="background:var(--teal);"></div><div class="is-name">Cuarto 2 · Pueblo Libre</div><div class="is-val mono">S/ 900</div></div>
+            <div class="income-source"><div class="is-dot" style="background:var(--amber);"></div><div class="is-name">Cuarto 3 · Jesús María</div><div class="is-val mono">S/ 750</div></div>
+            <div class="income-source" style="opacity:.45;"><div class="is-dot" style="background:var(--purple);"></div><div class="is-name">Cuarto 4 · San Miguel</div><div class="is-val mono">S/ 850 ·pendiente</div></div>
+          </div>
+          <div class="card" style="padding:20px;margin-top:18px;">
+            <div style="font-weight:800;font-size:13.5px;margin-bottom:12px;">Cuenta de cobro</div>
+            <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:4px;">Los pagos son procesados vía <strong>Culqi</strong> y <strong>MercadoPago</strong> y se depositan en tu cuenta bancaria registrada.</div>
+            <div style="font-size:12.5px;font-weight:700;color:var(--ink);margin-top:12px;">BCP ····8734</div>
+            <div style="font-size:12px;color:var(--ink-faint);margin-top:2px;">Ciclo de liquidación: día 20 de cada mes</div>
+            <button class="btn btn-ghost btn-sm" style="margin-top:14px;">Cambiar cuenta bancaria</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =================== PERFIL =================== -->
+    <div class="view page-content" id="page-perfil">
+      <div class="page-head">
+        <div><div class="eyebrow">Cuenta</div><h1>Mi perfil</h1></div>
+      </div>
+
+      <div class="profile-wrap">
+        <div class="profile-sidebar-card card">
+          <div class="prof-avatar">MG</div>
+          <h3 style="font-size:16px;">María Gutiérrez</h3>
+          <div style="font-size:12.5px;color:var(--ink-faint);margin:3px 0 12px;">Propietaria · Pueblo Libre, Lima</div>
+          <span class="badge badge-green" style="margin-bottom:14px;"><svg class="ic" viewBox="0 0 24 24" style="width:12px;height:12px;"><path d="M20 6 9 17l-5-5"/></svg> Identidad verificada</span>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;text-align:left;">
+            <div style="background:var(--paper);border-radius:12px;padding:12px 14px;"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--ink-faint);letter-spacing:.06em;margin-bottom:4px;">Cuartos</div><div style="font-family:var(--font-mono);font-weight:600;font-size:18px;">4</div></div>
+            <div style="background:var(--paper);border-radius:12px;padding:12px 14px;"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--ink-faint);letter-spacing:.06em;margin-bottom:4px;">Rating</div><div style="font-family:var(--font-mono);font-weight:600;font-size:18px;">4.9 ★</div></div>
+          </div>
+          <div style="margin-top:18px;display:flex;flex-direction:column;gap:8px;">
+            <button class="btn btn-ghost btn-block btn-sm" onclick="showLogin()">Cerrar sesión</button>
+          </div>
+        </div>
+
+        <div class="profile-form-card card">
+          <div style="font-family:var(--font-display);font-weight:800;font-size:14.5px;margin-bottom:18px;display:flex;align-items:center;gap:8px;"><svg class="ic" viewBox="0 0 24 24" style="color:var(--red);"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg> Información personal</div>
+          <div class="form-grid">
+            <div class="field"><label>Nombre completo</label><input value="María Gutiérrez"></div>
+            <div class="field"><label>Correo electrónico</label><input value="maria.gutierrez@gmail.com"></div>
+            <div class="field"><label>Teléfono</label><input value="+51 999 111 222"></div>
+            <div class="field"><label>DNI</label><input value="42187563"></div>
+            <div class="field"><label>Distrito</label><input value="Pueblo Libre"></div>
+            <div class="field"><label>Cuenta bancaria</label><input value="BCP ····8734"></div>
+          </div>
+          <button class="btn btn-primary">Guardar cambios</button>
+
+          <div style="margin-top:28px;padding-top:22px;border-top:1px solid var(--line-soft);">
+            <div style="font-family:var(--font-display);font-weight:800;font-size:14.5px;margin-bottom:16px;display:flex;align-items:center;gap:8px;"><svg class="ic" viewBox="0 0 24 24" style="color:var(--red);"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg> Documentos verificados</div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+              <div style="display:flex;align-items:center;gap:8px;background:var(--green-wash);padding:10px 14px;border-radius:11px;font-size:13px;font-weight:700;color:var(--green);"><svg class="ic" viewBox="0 0 24 24" style="width:14px;height:14px;"><path d="M20 6 9 17l-5-5"/></svg> DNI — Truora verificado</div>
+              <div style="display:flex;align-items:center;gap:8px;background:var(--green-wash);padding:10px 14px;border-radius:11px;font-size:13px;font-weight:700;color:var(--green);"><svg class="ic" viewBox="0 0 24 24" style="width:14px;height:14px;"><path d="M20 6 9 17l-5-5"/></svg> Cuenta bancaria — validada</div>
+              <div style="display:flex;align-items:center;gap:8px;background:var(--green-wash);padding:10px 14px;border-radius:11px;font-size:13px;font-weight:700;color:var(--green);"><svg class="ic" viewBox="0 0 24 24" style="width:14px;height:14px;"><path d="M20 6 9 17l-5-5"/></svg> Teléfono — verificado</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-area -->
+</div><!-- /app-shell -->
+
+<script>
+  /* AUTH */
+  function showLogin(){
+    document.querySelectorAll('.auth-view').forEach(v=>{v.style.display='none';v.classList.remove('active');});
+    document.getElementById('app-shell').classList.remove('active');
+    document.getElementById('app-shell').style.display='none';
+    var l=document.getElementById('view-login');l.style.display='flex';l.classList.add('active');
+  }
+  function showReg(){
+    document.querySelectorAll('.auth-view').forEach(v=>{v.style.display='none';v.classList.remove('active');});
+    var r=document.getElementById('view-register');r.style.display='flex';r.classList.add('active');
+    regStep(1);
+  }
+  function regStep(n){
+    [1,2,3].forEach(i=>{
+      var s=document.getElementById('reg-s'+i);if(s)s.style.display=(i===n)?'block':'none';
+      var d=document.getElementById('dot-'+i);
+      if(d){
+        d.classList.remove('is-active','is-done');
+        if(i<n) d.classList.add('is-done');
+        else if(i===n) d.classList.add('is-active');
+      }
+    });
+    var l12=document.getElementById('line-12'),l23=document.getElementById('line-23');
+    if(l12)l12.classList.toggle('is-done',n>1);
+    if(l23)l23.classList.toggle('is-done',n>2);
+  }
+  function enterApp(){
+    document.querySelectorAll('.auth-view').forEach(v=>{v.style.display='none';v.classList.remove('active');});
+    var shell=document.getElementById('app-shell');
+    shell.style.display='flex';shell.classList.add('active');
+    showPage('page-dashboard',document.getElementById('link-dashboard'));
+  }
+
+  /* APP */
+  function showPage(id, btn){
+    document.querySelectorAll('.main-area .view').forEach(v=>v.classList.remove('active'));
+    var p=document.getElementById(id);if(p)p.classList.add('active');
+    document.querySelectorAll('.sb-link').forEach(l=>l.classList.remove('is-active'));
+    if(btn)btn.classList.add('is-active');
+    // update topbar title
+    var titles={'page-dashboard':'Centro de operaciones','page-alojamientos':'Mis alojamientos','page-solicitudes':'Solicitudes de alojamiento','page-inquilinos':'Mis inquilinos','page-ingresos':'Ingresos','page-perfil':'Mi perfil'};
+    document.getElementById('topbar-title').textContent=titles[id]||'';
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+</script>
+</body>
+</html>
