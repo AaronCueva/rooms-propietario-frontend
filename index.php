@@ -35,4 +35,6 @@ $router->get('/logout', 'AuthController', 'logout');
 
 $router->get('/dashboard', 'DashboardController', 'index');
 
+$router->get('/api/ubicaciones', 'UbicacionController', 'obtenerPorReferencia');
+
 $router->dispatch();
