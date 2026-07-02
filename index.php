@@ -35,6 +35,17 @@ $router->get('/logout', 'AuthController', 'logout');
 
 $router->get('/dashboard', 'DashboardController', 'index');
 
+// Rutas de Alojamientos
+$router->get('/alojamientos', 'AlojamientoController', 'index');
+$router->get('/alojamientos/nuevo', 'AlojamientoController', 'crear');
+$router->post('/alojamientos/guardar', 'AlojamientoController', 'store');
+$router->post('/alojamientos/eliminar', 'AlojamientoController', 'eliminar');
+$router->get('/alojamientos/editar', 'AlojamientoController', 'edit');
+$router->post('/alojamientos/actualizar', 'AlojamientoController', 'update');
+$router->post('/alojamientos/servicios', 'AlojamientoController', 'gestionarServicios');
+$router->post('/alojamientos/politicas', 'AlojamientoController', 'gestionarPoliticas');
+
+// Rutas de API
 $router->get('/api/ubicaciones', 'UbicacionController', 'obtenerPorReferencia');
 
 $router->dispatch();

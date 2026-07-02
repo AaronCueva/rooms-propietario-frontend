@@ -239,9 +239,81 @@ button { font-family: inherit; cursor: pointer; }
 .trend-up { background: var(--green-wash); color: var(--green); }
 .trend-down { background: var(--red-wash); color: var(--red); }
 
+/* ---- property card grid ---- */
+.prop-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.prop-card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; transition: box-shadow .15s, transform .15s; }
+.prop-card:hover { box-shadow: var(--shadow-pop); transform: translateY(-2px); }
+.prop-thumb { height: 150px; display: flex; align-items: center; justify-content: center; position: relative; }
+.prop-thumb .status-dot { position: absolute; top: 12px; right: 12px; }
+.prop-body { padding: 16px 18px 18px; }
+.prop-title { font-family: var(--font-display); font-weight: 800; font-size: 14.5px; margin-bottom: 3px; }
+.prop-sub { font-size: 12.5px; color: var(--ink-soft); margin-bottom: 11px; display: flex; align-items: center; gap: 5px; }
+.prop-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px 0; border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft); margin-bottom: 12px; }
+.ps-item .ps-label { font-size: 10.5px; color: var(--ink-faint); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+.ps-item .ps-val { font-family: var(--font-mono); font-weight: 600; font-size: 14px; margin-top: 2px; }
+.prop-actions { display: flex; gap: 8px; }
+
+.prop-card-add {
+  border: 1.5px dashed var(--line); background: transparent; box-shadow: none;
+  display: flex; align-items: center; justify-content: center; min-height: 280px; text-decoration: none;
+}
+.prop-card-add:hover { border-color: var(--red); background: #FFFBFB; transform: none; box-shadow: none; }
+.add-icon-box {
+  width: 52px; height: 52px; border-radius: 16px; background: var(--red-wash);
+  display: flex; align-items: center; justify-content: center; margin: 0 auto 14px;
+}
+
+/* ---- form sections ---- */
+.form-section { padding: 26px 28px; margin-bottom: 20px; }
+.form-section-head { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+.form-section-head h3 { font-size: 16px; font-weight: 800; }
+.form-section-head p { font-size: 13px; color: var(--ink-soft); margin-top: 2px; }
+.fsh-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px; }
+.form-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 8px; padding-bottom: 32px; }
+
+.checkbox-row {
+  display: flex; flex-wrap: wrap; gap: 16px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line-soft);
+}
+.check-item {
+  display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; cursor: pointer;
+  background: var(--line-soft); padding: 8px 14px; border-radius: 10px;
+}
+.check-item input[type="checkbox"] { accent-color: var(--red); width: 16px; height: 16px; cursor: pointer; }
+.check-item:has(input:checked) { background: var(--red-wash); color: var(--red); }
+
+/* ---- upload zone ---- */
+.upload-zone {
+  border: 1.5px dashed var(--line); border-radius: 14px; padding: 32px; text-align: center;
+  background: #FBFAF8; cursor: pointer; transition: border-color .15s, background .15s;
+}
+.upload-zone:hover, .upload-zone.drag-over { border-color: var(--red); background: #FFFBFB; }
+.upload-zone .ub-title { font-weight: 700; font-size: 14px; margin: 10px 0 3px; }
+.upload-zone .ub-sub { font-size: 12.5px; color: var(--ink-faint); }
+
+/* ---- photo preview ---- */
+.photo-preview-grid {
+  display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px;
+}
+.photo-preview-item {
+  position: relative; width: 110px; height: 90px; border-radius: 12px; overflow: hidden;
+  border: 2px solid var(--line); flex-shrink: 0;
+}
+.photo-preview-item img { width: 100%; height: 100%; object-fit: cover; }
+.photo-badge {
+  position: absolute; bottom: 6px; left: 6px;
+  background: var(--red); color: #fff; font-size: 10px; font-weight: 800;
+  padding: 2px 8px; border-radius: 99px; font-family: var(--font-display);
+}
+
+.mono { font-family: var(--font-mono); }
+
 @media(max-width: 1020px) {
   .stat-grid { grid-template-columns: 1fr 1fr; }
+  .prop-grid { grid-template-columns: 1fr 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
 }
 @media(max-width: 680px) {
   .stat-grid { grid-template-columns: 1fr; }
+  .prop-grid { grid-template-columns: 1fr; }
 }

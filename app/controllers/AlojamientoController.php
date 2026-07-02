@@ -1,0 +1,334 @@
+<?php
+namespace App\Controllers;
+
+use App\Core\Controller;
+use App\Models\Alojamiento;
+use App\Models\Multimedia;
+use App\Models\Catalogo;
+use App\Models\Ubicacion;
+
+use App\Models\Servicio;
+use App\Models\PoliticaCasa;
+use App\Models\AlojamientoServicio;
+use App\Models\AlojamientoPolitica;
+
+class AlojamientoController extends Controller
+{
+    private $alojamientoModel;
+    private $multimediaModel;
+    private $catalogoModel;
+    private $ubicacionModel;
+    private $servicioModel;
+    private $politicaModel;
+    private $alojamientoServicioModel;
+    private $alojamientoPoliticaModel;
+
+    public function __construct()
+    {
+        if (!isset($_SESSION['usuario_id'])) {
+            $this->redirect('/login');
+        }
+        $this->alojamientoModel = new Alojamiento();
+        $this->multimediaModel = new Multimedia();
+        $this->catalogoModel = new Catalogo();
+        $this->ubicacionModel = new Ubicacion();
+        $this->servicioModel = new Servicio();
+        $this->politicaModel = new PoliticaCasa();
+        $this->alojamientoServicioModel = new AlojamientoServicio();
+        $this->alojamientoPoliticaModel = new AlojamientoPolitica();
+    }
+
+    /**
+     * Listado de alojamientos del propietario
+     */
+    public function index()
+    {
+        $usuario_id = $_SESSION['usuario_id'];
+        $alojamientos = $this->alojamientoModel->obtenerPorUsuarioId($usuario_id);
+
+        $this->render('propietario/alojamientos/index', [
+            'alojamientos' => $alojamientos,
+            'titulo' => 'Mis alojamientos'
+        ]);
+    }
+
+    /**
+     * Formulario para crear un nuevo alojamiento
+     */
+    public function crear()
+    {
+        $tipos_alojamiento = $this->catalogoModel->obtenerPorReferencia('TIPO_PUBLICACION_ALOJAMIENTO');
+        $generos = $this->catalogoModel->obtenerPorReferencia('GENERO_EXCLUSIVO_ALOJAMIENTO');
+        $monedas = $this->catalogoModel->obtenerPorReferencia('TIPO_MONEDA');
+        $departamentos = $this->ubicacionModel->obtenerDepartamentos();
+
+        $this->render('propietario/alojamientos/create', [
+            'tipos_alojamiento' => $tipos_alojamiento,
+            'generos' => $generos,
+            'monedas' => $monedas,
+            'departamentos' => $departamentos,
+            'titulo' => 'Publicar nuevo cuarto'
+        ]);
+    }
+
+    /**
+     * Procesar y guardar el nuevo alojamiento con sus fotos
+     */
+    public function store()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/alojamientos');
+        }
+
+        $usuario_id = $_SESSION['usuario_id'];
+
+        $datos = [
+            'titulo'                  => $_POST['titulo'] ?? '',
+            'tipo_codigo'             => $_POST['tipo_codigo'] ?? null,
+            'descripcion'             => $_POST['descripcion'] ?? null,
+            'numero_habitaciones'     => $_POST['numero_habitaciones'] ?? 1,
+            'numero_banos'            => $_POST['numero_banos'] ?? 1,
+            'bano_privado'            => isset($_POST['bano_privado']) ? true : false,
+            'tamano_m2'               => $_POST['tamano_m2'] ?? null,
+            'genero_exclusivo_codigo' => $_POST['genero_exclusivo_codigo'] ?? null,
+            'mascotas_permitidas'     => isset($_POST['mascotas_permitidas']) ? true : false,
+            'fumadores_permitidos'    => isset($_POST['fumadores_permitidos']) ? true : false,
+            'ubicacion_id'            => $_POST['distrito'] ?? null,
+            'direccion'               => $_POST['direccion'] ?? null,
+            'latitud'                 => !empty($_POST['latitud']) ? $_POST['latitud'] : null,
+            'longitud'                => !empty($_POST['longitud']) ? $_POST['longitud'] : null,
+            'precio_mensual'          => $_POST['precio_mensual'] ?? 0,
+            'moneda_codigo'           => $_POST['moneda_codigo'] ?? 'PEN',
+            'garantia'                => $_POST['garantia'] ?? null,
+            'duracion_minima_meses'   => $_POST['duracion_minima_meses'] ?? null,
+            'fecha_disponible'        => !empty($_POST['fecha_disponible']) ? $_POST['fecha_disponible'] : null,
+            'amoblado'                => isset($_POST['amoblado']) ? true : false,
+            'estado_codigo'           => 'EPA001',
+            'usuario_id'              => $usuario_id
+        ];
+
+        // Validaciones básicas
+        if (empty($datos['titulo']) || empty($datos['precio_mensual'])) {
+            $this->setFlash('error', 'El título y el precio mensual son obligatorios.');
+            $this->redirect('/alojamientos/nuevo');
+        }
+
+        try {
+            // Crear el alojamiento y obtener su ID
+            $alojamiento_id = $this->alojamientoModel->crear($datos);
+
+            if (!$alojamiento_id) {
+                $this->setFlash('error', 'No se pudo crear el alojamiento.');
+                $this->redirect('/alojamientos/nuevo');
+            }
+
+            // Procesar fotos
+            if (isset($_FILES['fotos']) && !empty($_FILES['fotos']['name'][0])) {
+                $upload_dir = __DIR__ . '/../../public/uploads/alojamientos/';
+
+                // Asegurarse que el directorio existe
+                if (!is_dir($upload_dir)) {
+                    mkdir($upload_dir, 0755, true);
+                }
+
+                $total_fotos = count($_FILES['fotos']['name']);
+                for ($i = 0; $i < $total_fotos; $i++) {
+                    if ($_FILES['fotos']['error'][$i] === UPLOAD_ERR_OK) {
+                        $tmp_name = $_FILES['fotos']['tmp_name'][$i];
+                        $original_name = $_FILES['fotos']['name'][$i];
+                        $extension = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
+
+                        // Validar extensión
+                        $allowed = ['jpg', 'jpeg', 'png', 'webp'];
+                        if (!in_array($extension, $allowed)) {
+                            continue;
+                        }
+
+                        // Generar nombre único
+                        $new_name = uniqid('aloj_') . '_' . time() . '.' . $extension;
+                        $destination = $upload_dir . $new_name;
+
+                        if (move_uploaded_file($tmp_name, $destination)) {
+                            $url_relativa = '/public/uploads/alojamientos/' . $new_name;
+                            $this->multimediaModel->guardarFotoAlojamiento(
+                                $alojamiento_id,
+                                $url_relativa,
+                                $original_name,
+                                $i + 1
+                            );
+                        }
+                    }
+                }
+            }
+
+
+            $this->setFlash('success', '¡Cuarto publicado exitosamente!');
+            $this->redirect('/alojamientos');
+
+        } catch (\Exception $e) {
+            $this->setFlash('error', 'Error al crear el alojamiento: ' . $e->getMessage());
+            $this->redirect('/alojamientos/nuevo');
+        }
+    }
+
+    /**
+     * Vista de Edición (Datos, Fotos, Servicios, Políticas)
+     */
+    public function edit()
+    {
+        $alojamiento_id = $_GET['id'] ?? null;
+        if (!$alojamiento_id) {
+            $this->redirect('/alojamientos');
+        }
+
+        $alojamiento = $this->alojamientoModel->obtenerPorId($alojamiento_id);
+        if (!$alojamiento || $alojamiento['usuario_id'] !== $_SESSION['usuario_id']) {
+            $this->redirect('/alojamientos');
+        }
+
+        $tipos_alojamiento = $this->catalogoModel->obtenerPorReferencia('TIPO_PUBLICACION_ALOJAMIENTO');
+        $generos = $this->catalogoModel->obtenerPorReferencia('GENERO_EXCLUSIVO_ALOJAMIENTO');
+        $monedas = $this->catalogoModel->obtenerPorReferencia('TIPO_MONEDA');
+        $departamentos = $this->ubicacionModel->obtenerDepartamentos();
+        
+        $fotos = $this->multimediaModel->obtenerFotosPorAlojamiento($alojamiento_id);
+        
+        // Relacionados
+        $servicios_asignados = $this->alojamientoServicioModel->obtenerPorAlojamiento($alojamiento_id);
+        $politicas_asignadas = $this->alojamientoPoliticaModel->obtenerPorAlojamiento($alojamiento_id);
+        
+        // Catálogos
+        $servicios_disponibles = $this->servicioModel->obtenerTodos();
+        $politicas_disponibles = $this->politicaModel->obtenerTodos();
+
+        $this->render('propietario/alojamientos/edit', [
+            'alojamiento' => $alojamiento,
+            'tipos_alojamiento' => $tipos_alojamiento,
+            'generos' => $generos,
+            'monedas' => $monedas,
+            'departamentos' => $departamentos,
+            'fotos' => $fotos,
+            'servicios_asignados' => $servicios_asignados,
+            'politicas_asignadas' => $politicas_asignadas,
+            'servicios_disponibles' => $servicios_disponibles,
+            'politicas_disponibles' => $politicas_disponibles,
+            'titulo' => 'Editar alojamiento'
+        ]);
+    }
+
+    /**
+     * Procesar actualización básica
+     */
+    public function update()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/alojamientos');
+        }
+
+        $alojamiento_id = $_POST['alojamiento_id'] ?? null;
+        $usuario_id = $_SESSION['usuario_id'];
+
+        $datos = [
+            'titulo'                  => $_POST['titulo'] ?? '',
+            'tipo_codigo'             => $_POST['tipo_codigo'] ?? null,
+            'descripcion'             => $_POST['descripcion'] ?? null,
+            'numero_habitaciones'     => $_POST['numero_habitaciones'] ?? 1,
+            'numero_banos'            => $_POST['numero_banos'] ?? 1,
+            'bano_privado'            => isset($_POST['bano_privado']) ? true : false,
+            'tamano_m2'               => $_POST['tamano_m2'] ?? null,
+            'genero_exclusivo_codigo' => $_POST['genero_exclusivo_codigo'] ?? null,
+            'mascotas_permitidas'     => isset($_POST['mascotas_permitidas']) ? true : false,
+            'fumadores_permitidos'    => isset($_POST['fumadores_permitidos']) ? true : false,
+            'ubicacion_id'            => $_POST['distrito'] ?? null,
+            'direccion'               => $_POST['direccion'] ?? null,
+            'latitud'                 => !empty($_POST['latitud']) ? $_POST['latitud'] : null,
+            'longitud'                => !empty($_POST['longitud']) ? $_POST['longitud'] : null,
+            'precio_mensual'          => $_POST['precio_mensual'] ?? 0,
+            'moneda_codigo'           => $_POST['moneda_codigo'] ?? 'PEN',
+            'garantia'                => $_POST['garantia'] ?? null,
+            'duracion_minima_meses'   => $_POST['duracion_minima_meses'] ?? null,
+            'fecha_disponible'        => !empty($_POST['fecha_disponible']) ? $_POST['fecha_disponible'] : null,
+            'amoblado'                => isset($_POST['amoblado']) ? true : false,
+            'usuario_id'              => $usuario_id
+        ];
+
+        $this->alojamientoModel->actualizar($alojamiento_id, $datos);
+        $this->setFlash('success', 'Datos guardados correctamente.');
+        $this->redirect('/alojamientos/editar?id=' . $alojamiento_id);
+    }
+
+    /**
+     * API: Asignar o remover servicio
+     */
+    public function gestionarServicios()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
+        
+        $accion = $_POST['accion'] ?? '';
+        $alojamiento_id = $_POST['alojamiento_id'];
+        $servicio_id = $_POST['servicio_id'];
+        
+        if ($accion === 'agregar') {
+            $precio = $_POST['precio'] ?? 0;
+            $this->alojamientoServicioModel->asociar($alojamiento_id, $servicio_id, $precio);
+        } else if ($accion === 'remover') {
+            $this->alojamientoServicioModel->remover($alojamiento_id, $servicio_id);
+        }
+        
+        $this->setFlash('success', 'Servicios actualizados.');
+        $this->redirect('/alojamientos/editar?id=' . $alojamiento_id);
+    }
+
+    /**
+     * API: Asignar, remover o crear política
+     */
+    public function gestionarPoliticas()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
+        
+        $accion = $_POST['accion'] ?? '';
+        $alojamiento_id = $_POST['alojamiento_id'];
+        
+        if ($accion === 'agregar') {
+            $politica_id = $_POST['politica_casa_id'] ?? null;
+            if ($politica_id) {
+                $this->alojamientoPoliticaModel->asociar($alojamiento_id, $politica_id);
+            }
+        } else if ($accion === 'remover') {
+            $politica_id = $_POST['politica_casa_id'];
+            $this->alojamientoPoliticaModel->remover($alojamiento_id, $politica_id);
+        } else if ($accion === 'crear') {
+            $nombre = $_POST['nueva_politica'] ?? '';
+            if (!empty($nombre)) {
+                $usuario = $_SESSION['nombres'] ?? 'Propietario';
+                $nuevo_id = $this->politicaModel->crear($nombre, $usuario);
+                if ($nuevo_id) {
+                    $this->alojamientoPoliticaModel->asociar($alojamiento_id, $nuevo_id);
+                }
+            }
+        }
+        
+        $this->setFlash('success', 'Políticas actualizadas.');
+        $this->redirect('/alojamientos/editar?id=' . $alojamiento_id);
+    }
+
+    /**
+     * Eliminar un alojamiento (soft delete)
+     */
+    public function eliminar()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/alojamientos');
+        }
+
+        $alojamiento_id = $_POST['alojamiento_id'] ?? null;
+        $usuario_id = $_SESSION['usuario_id'];
+
+        if ($alojamiento_id) {
+            $this->alojamientoModel->eliminar($alojamiento_id, $usuario_id);
+            $this->setFlash('success', 'Alojamiento eliminado correctamente.');
+        }
+
+        $this->redirect('/alojamientos');
+    }
+}
