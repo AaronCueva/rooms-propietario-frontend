@@ -55,8 +55,10 @@ class Alojamiento
      */
     public function crear($datos)
     {
+        $codigo = 'ALJ-' . strtoupper(substr(uniqid(), -8));
+
         $query = "INSERT INTO alojamiento (
-                    titulo, tipo_codigo, descripcion,
+                    codigo, titulo, tipo_codigo, descripcion,
                     numero_habitaciones, numero_banos, bano_privado,
                     tamano_m2, genero_exclusivo_codigo,
                     mascotas_permitidas, fumadores_permitidos,
@@ -66,7 +68,7 @@ class Alojamiento
                     amoblado, estado_codigo,
                     usuario_id, habilitado
                   ) VALUES (
-                    :titulo, :tipo_codigo, :descripcion,
+                    :codigo, :titulo, :tipo_codigo, :descripcion,
                     :numero_habitaciones, :numero_banos, :bano_privado,
                     :tamano_m2, :genero_exclusivo_codigo,
                     :mascotas_permitidas, :fumadores_permitidos,
@@ -79,6 +81,7 @@ class Alojamiento
 
         $stmt = $this->db->prepare($query);
 
+        $stmt->bindValue(':codigo', $codigo);
         $stmt->bindValue(':titulo', $datos['titulo']);
         $stmt->bindValue(':tipo_codigo', $datos['tipo_codigo'] ?? null);
         $stmt->bindValue(':descripcion', $datos['descripcion'] ?? null);

@@ -331,4 +331,82 @@ class AlojamientoController extends Controller
 
         $this->redirect('/alojamientos');
     }
+
+    /**
+     * Subir nuevas fotos a un alojamiento existente
+     */
+    public function agregarFotos()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/alojamientos');
+        }
+
+        $alojamiento_id = $_POST['alojamiento_id'] ?? null;
+        if (!$alojamiento_id) {
+            $this->redirect('/alojamientos');
+        }
+
+        // Obtener el orden máximo actual
+        $fotosExistentes = $this->multimediaModel->obtenerFotosPorAlojamiento($alojamiento_id);
+        $ordenMax = 0;
+        foreach ($fotosExistentes as $f) {
+            if ($f['orden'] > $ordenMax) $ordenMax = $f['orden'];
+        }
+
+        if (isset($_FILES['nuevas_fotos']) && !empty($_FILES['nuevas_fotos']['name'][0])) {
+            $upload_dir = __DIR__ . '/../../public/uploads/alojamientos/';
+            if (!is_dir($upload_dir)) {
+                mkdir($upload_dir, 0755, true);
+            }
+
+            $total = count($_FILES['nuevas_fotos']['name']);
+            for ($i = 0; $i < $total; $i++) {
+                if ($_FILES['nuevas_fotos']['error'][$i] === UPLOAD_ERR_OK) {
+                    $tmp_name = $_FILES['nuevas_fotos']['tmp_name'][$i];
+                    $original_name = $_FILES['nuevas_fotos']['name'][$i];
+                    $extension = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
+
+                    $allowed = ['jpg', 'jpeg', 'png', 'webp'];
+                    if (!in_array($extension, $allowed)) continue;
+
+                    $new_name = uniqid('aloj_') . '_' . time() . '.' . $extension;
+                    $destination = $upload_dir . $new_name;
+
+                    if (move_uploaded_file($tmp_name, $destination)) {
+                        $ordenMax++;
+                        $url_relativa = '/public/uploads/alojamientos/' . $new_name;
+                        $this->multimediaModel->guardarFotoAlojamiento(
+                            $alojamiento_id,
+                            $url_relativa,
+                            $original_name,
+                            $ordenMax
+                        );
+                    }
+                }
+            }
+        }
+
+        $this->setFlash('success', 'Fotos subidas correctamente.');
+        $this->redirect('/alojamientos/editar?id=' . $alojamiento_id);
+    }
+
+    /**
+     * Eliminar (deshabilitar) una foto de un alojamiento
+     */
+    public function eliminarFoto()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/alojamientos');
+        }
+
+        $alojamiento_id = $_POST['alojamiento_id'] ?? null;
+        $multimedia_id = $_POST['multimedia_id'] ?? null;
+
+        if ($multimedia_id) {
+            $this->multimediaModel->eliminar($multimedia_id);
+            $this->setFlash('success', 'Foto eliminada.');
+        }
+
+        $this->redirect('/alojamientos/editar?id=' . $alojamiento_id);
+    }
 }

@@ -44,6 +44,8 @@ $router->get('/alojamientos/editar', 'AlojamientoController', 'edit');
 $router->post('/alojamientos/actualizar', 'AlojamientoController', 'update');
 $router->post('/alojamientos/servicios', 'AlojamientoController', 'gestionarServicios');
 $router->post('/alojamientos/politicas', 'AlojamientoController', 'gestionarPoliticas');
+$router->post('/alojamientos/fotos/agregar', 'AlojamientoController', 'agregarFotos');
+$router->post('/alojamientos/fotos/eliminar', 'AlojamientoController', 'eliminarFoto');
 
 // Rutas de API
 $router->get('/api/ubicaciones', 'UbicacionController', 'obtenerPorReferencia');

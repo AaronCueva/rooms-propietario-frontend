@@ -25,6 +25,7 @@
     <!-- TABS -->
     <div class="edit-tabs">
         <div class="et-btn active" onclick="switchTab('datos', this)">Datos Generales</div>
+        <div class="et-btn" onclick="switchTab('fotos', this)">Fotos</div>
         <div class="et-btn" onclick="switchTab('servicios', this)">Servicios</div>
         <div class="et-btn" onclick="switchTab('politicas', this)">Políticas de Convivencia</div>
     </div>
@@ -140,6 +141,44 @@
                 <button type="submit" class="btn btn-primary">Guardar cambios generales</button>
             </div>
         </form>
+    </div>
+
+    <!-- TAB: FOTOS -->
+    <div id="pane-fotos" class="et-pane">
+        <div class="card form-section">
+            <h3 style="margin-bottom:20px;">Fotos publicadas</h3>
+            <?php if (!empty($fotos)): ?>
+                <div style="display:flex; flex-wrap:wrap; gap:16px;">
+                    <?php foreach ($fotos as $foto): ?>
+                        <div style="position:relative; width:150px; height:120px; border-radius:8px; overflow:hidden; border:1px solid var(--line);">
+                            <img src="<?php echo htmlspecialchars($foto['url']); ?>" style="width:100%; height:100%; object-fit:cover;">
+                            <?php if ($foto['orden'] == 1): ?>
+                                <span style="position:absolute; bottom:5px; left:5px; background:var(--blue); color:#fff; font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px;">Principal</span>
+                            <?php endif; ?>
+                            <form method="POST" action="/alojamientos/fotos/eliminar" style="position:absolute; top:4px; right:4px;">
+                                <input type="hidden" name="alojamiento_id" value="<?php echo $alojamiento['alojamiento_id']; ?>">
+                                <input type="hidden" name="multimedia_id" value="<?php echo $foto['multimedia_id']; ?>">
+                                <button type="submit" style="background:var(--red); color:#fff; border:none; border-radius:50%; width:22px; height:22px; cursor:pointer;" title="Eliminar foto"><i class="fas fa-times"></i></button>
+                            </form>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php else: ?>
+                <p class="text-muted">No hay fotos publicadas para este cuarto.</p>
+            <?php endif; ?>
+
+            <!-- Para subir nuevas fotos (simplificado para que lo actualices en una futura versión) -->
+            <form method="POST" action="/alojamientos/fotos/agregar" enctype="multipart/form-data" style="margin-top:24px; padding-top:24px; border-top:1px dashed var(--line);">
+                <input type="hidden" name="alojamiento_id" value="<?php echo $alojamiento['alojamiento_id']; ?>">
+                <div style="display:flex; gap:10px; align-items:flex-end;">
+                    <div class="field" style="margin-bottom:0; flex:1;">
+                        <label>Subir nuevas fotos (Max 5)</label>
+                        <input type="file" name="nuevas_fotos[]" multiple accept="image/*" style="border:1px solid var(--line); border-radius:8px; padding:10px; width:100%;">
+                    </div>
+                    <button class="btn btn-dark" style="padding:13px 20px;">Subir fotos</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- TAB: SERVICIOS -->
