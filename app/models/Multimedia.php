@@ -69,4 +69,33 @@ class Multimedia
         $stmt->bindParam(':multimedia_id', $multimedia_id);
         return $stmt->execute();
     }
+
+    /**
+     * Guardar un documento PDF (ej. Contrato firmado)
+     */
+    public function guardarDocumentoContrato($url, $nombre)
+    {
+        // En este caso, el tipo_codigo puede ser 'DOC' o similar. Usaremos DOC.
+        $query = "INSERT INTO multimedia (url, tipo_codigo, nombre, orden, habilitado)
+                  VALUES (:url, 'DOC', :nombre, 1, true) RETURNING multimedia_id";
+
+        $stmt = $this->db->prepare($query);
+        $stmt->bindValue(':url', $url);
+        $stmt->bindValue(':nombre', $nombre);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ? $row['multimedia_id'] : null;
+    }
+
+    /**
+     * Obtener documento por ID
+     */
+    public function obtenerPorId($multimedia_id)
+    {
+        $query = "SELECT * FROM multimedia WHERE multimedia_id = :multimedia_id AND habilitado = true";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':multimedia_id', $multimedia_id);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
 }

@@ -308,12 +308,277 @@ button { font-family: inherit; cursor: pointer; }
 
 .mono { font-family: var(--font-mono); }
 
+/* ---- Sidebar badge (solicitudes pendientes) ---- */
+.sb-badge {
+  margin-left: auto;
+  background: var(--red);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 999px;
+  min-width: 20px;
+  text-align: center;
+  line-height: 1.6;
+  animation: sb-pulse 2s ease-in-out infinite;
+}
+@keyframes sb-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.5); }
+  50%       { box-shadow: 0 0 0 5px rgba(220,38,38,0); }
+}
+
+/* ---- Badge extra colors ---- */
+.badge-blue  { background: var(--blue-wash);   color: var(--blue);   }
+.badge-faint { background: var(--line-soft);   color: var(--ink-faint); }
+
+/* ---- Solicitudes: Filtros ---- */
+.sol-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.sol-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  background: #fff;
+  border: 1.5px solid var(--line);
+  cursor: pointer;
+  transition: all .13s;
+  text-decoration: none;
+}
+.sol-filter-btn:hover { border-color: var(--ink-faint); color: var(--ink); }
+.sol-filter-btn.active { border-color: transparent; color: #fff; }
+.sol-filter-btn.active.color-amber  { background: var(--amber); }
+.sol-filter-btn.active.color-blue   { background: var(--blue); }
+.sol-filter-btn.active.color-green  { background: var(--green); }
+.sol-filter-btn.active.color-red    { background: var(--red); }
+.sol-filter-btn.active.color-faint  { background: var(--ink-faint); }
+.sol-filter-btn.active.color-       { background: var(--navy); }
+.sol-filter-count {
+  background: rgba(0,0,0,.15);
+  border-radius: 999px;
+  padding: 0px 6px;
+  font-size: 11px;
+}
+.sol-filter-btn:not(.active) .sol-filter-count {
+  background: var(--red-wash);
+  color: var(--red);
+}
+
+/* ---- Solicitudes: Tabla ---- */
+.sol-table-wrap { overflow: hidden; }
+.sol-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.sol-table thead th {
+  padding: 13px 18px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  background: var(--line-soft);
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.sol-table tbody td {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line-soft);
+  vertical-align: middle;
+  font-size: 13.5px;
+}
+.sol-row:last-child td { border-bottom: none; }
+.sol-row:hover td { background: #FBFAF8; }
+.sol-row-pending td { background: #FFFCF5; }
+.sol-row-pending:hover td { background: #FFF8EC; }
+
+.sol-inquilino { display: flex; align-items: center; gap: 10px; }
+.sol-av {
+  width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: 800; font-size: 13.5px; color: #fff;
+}
+.sol-nombre { font-weight: 700; font-size: 13.5px; }
+.sol-univ   { font-size: 11.5px; color: var(--ink-faint); margin-top: 2px; }
+
+.sol-aloj-nombre { font-weight: 600; font-size: 13px; }
+.sol-aloj-loc    { font-size: 11.5px; color: var(--ink-faint); margin-top: 2px; display: flex; align-items: center; gap: 4px; }
+
+.sol-periodo      { font-size: 13px; font-weight: 600; }
+.sol-periodo-end  { font-size: 11.5px; color: var(--ink-faint); }
+
+.sol-precio { font-size: 14px; font-weight: 700; }
+
+.sol-fecha { font-size: 13px; font-weight: 600; }
+.sol-hora  { font-size: 11.5px; color: var(--ink-faint); }
+
+.sol-ver-btn { white-space: nowrap; }
+
+/* ---- Solicitudes: Empty state ---- */
+.sol-empty {
+  text-align: center;
+  padding: 80px 20px;
+}
+.sol-empty-icon {
+  width: 72px; height: 72px; border-radius: 20px;
+  background: var(--line-soft);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 18px;
+  font-size: 28px; color: var(--ink-faint);
+}
+.sol-empty-title { font-family: var(--font-display); font-weight: 800; font-size: 18px; margin-bottom: 8px; }
+.sol-empty-sub   { font-size: 14px; color: var(--ink-soft); }
+
+/* ---- Solicitud: Breadcrumb ---- */
+.sol-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+.sol-breadcrumb a {
+  color: var(--ink-soft);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color .12s;
+}
+.sol-breadcrumb a:hover { color: var(--red); }
+
+/* ---- Solicitud: Detail card ---- */
+.sol-det-card {}
+.sol-det-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.sol-det-card-head h6 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 14px;
+  margin: 0;
+}
+.sol-det-card-body { padding: 20px; }
+
+.sol-det-inquilino { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+.sol-det-av {
+  width: 58px; height: 58px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: 800; font-size: 20px; color: #fff;
+  overflow: hidden;
+}
+.sol-det-av img { width: 100%; height: 100%; object-fit: cover; }
+.sol-det-nombre { font-family: var(--font-display); font-weight: 800; font-size: 16px; }
+.sol-det-sub    { font-size: 13px; color: var(--ink-soft); margin-top: 3px; display: flex; align-items: center; gap: 6px; }
+
+.sol-det-data-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line-soft);
+}
+.sol-det-data-item {}
+.sol-dd-label { font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 4px; }
+.sol-dd-val   { font-size: 13.5px; font-weight: 600; }
+.sol-dd-val a { color: var(--blue); }
+.sol-dd-val a:hover { text-decoration: underline; }
+
+.sol-aloj-row { display: flex; align-items: center; gap: 14px; }
+.sol-aloj-thumb {
+  width: 52px; height: 52px; border-radius: 14px; flex-shrink: 0;
+  background: var(--red-wash);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; color: var(--red);
+}
+
+/* ---- Solicitud: Actions ---- */
+.sol-det-actions { display: flex; align-items: center; gap: 10px; }
+
+/* ---- Solicitud: Period box ---- */
+.sol-det-period-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--line-soft);
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+}
+.sol-period-col { text-align: center; }
+.sol-period-label { font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-faint); }
+.sol-period-val   { font-family: var(--font-display); font-weight: 800; font-size: 14px; margin-top: 4px; }
+.sol-period-arrow { color: var(--ink-faint); font-size: 18px; }
+
+.sol-det-total { margin-bottom: 20px; padding-top: 16px; border-top: 1px solid var(--line-soft); }
+.sol-total-val { font-family: var(--font-mono); font-weight: 700; font-size: 22px; margin-top: 4px; color: var(--green); }
+
+/* ---- Solicitud: Timeline ---- */
+.sol-timeline { padding-top: 16px; border-top: 1px solid var(--line-soft); }
+.sol-tl-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 16px;
+  position: relative;
+}
+.sol-tl-item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 18px;
+  bottom: 0;
+  width: 2px;
+  background: var(--line);
+}
+.sol-tl-item.done:not(:last-child)::before { background: var(--green); }
+.sol-tl-dot {
+  width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0;
+  background: var(--line); border: 2px solid #fff;
+  box-shadow: 0 0 0 2px var(--line);
+  margin-top: 2px;
+}
+.sol-tl-item.done      .sol-tl-dot { background: var(--green); box-shadow: 0 0 0 2px var(--green-wash); }
+.sol-tl-item.done.error .sol-tl-dot { background: var(--red);   box-shadow: 0 0 0 2px var(--red-wash); }
+.sol-tl-item.done.faint .sol-tl-dot { background: var(--ink-faint); box-shadow: 0 0 0 2px var(--line); }
+.sol-tl-item.done.success .sol-tl-dot { background: var(--green); box-shadow: 0 0 0 2px var(--green-wash); }
+.sol-tl-label { font-size: 13px; font-weight: 600; }
+.sol-tl-date  { font-size: 11.5px; color: var(--ink-faint); margin-top: 2px; }
+
+/* ---- Solicitud: Observación rechazo ---- */
+.sol-obs-box {
+  background: var(--red-wash);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 13.5px;
+  color: #7A1C1C;
+  line-height: 1.6;
+}
+
 @media(max-width: 1020px) {
   .stat-grid { grid-template-columns: 1fr 1fr; }
   .prop-grid { grid-template-columns: 1fr 1fr; }
   .form-grid { grid-template-columns: 1fr; }
+  .sol-det-data-grid { grid-template-columns: 1fr; }
 }
 @media(max-width: 680px) {
   .stat-grid { grid-template-columns: 1fr; }
   .prop-grid { grid-template-columns: 1fr; }
+  .sol-filters { gap: 6px; }
+  .sol-table-wrap { overflow-x: auto; }
+  .sol-det-actions { flex-direction: column; width: 100%; }
 }

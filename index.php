@@ -47,7 +47,21 @@ $router->post('/alojamientos/politicas', 'AlojamientoController', 'gestionarPoli
 $router->post('/alojamientos/fotos/agregar', 'AlojamientoController', 'agregarFotos');
 $router->post('/alojamientos/fotos/eliminar', 'AlojamientoController', 'eliminarFoto');
 
+// Rutas de Solicitudes
+$router->get('/solicitudes', 'SolicitudController', 'index');
+$router->get('/solicitudes/detalle', 'SolicitudController', 'detalle');
+$router->post('/solicitudes/aprobar', 'SolicitudController', 'aprobar');
+$router->post('/solicitudes/rechazar', 'SolicitudController', 'rechazar');
+
 // Rutas de API
 $router->get('/api/ubicaciones', 'UbicacionController', 'obtenerPorReferencia');
+
+// Rutas de Contratos
+$router->get('/contratos', 'ContratoController', 'index');
+$router->get('/contratos/formalizar', 'ContratoController', 'formalizar');
+$router->post('/contratos/guardar', 'ContratoController', 'guardar');
+$router->get('/contratos/detalle', 'ContratoController', 'detalle');
+$router->post('/contratos/finalizar', 'ContratoController', 'finalizar');
+$router->post('/contratos/calificar', 'ContratoController', 'calificar');
 
 $router->dispatch();

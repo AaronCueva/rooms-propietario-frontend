@@ -22,6 +22,10 @@
     $foto_usuario = $_SESSION['url_foto'] ?? null;
     $nombre_completo = $_SESSION['nombres'] . ' ' . $_SESSION['apellidos'];
     $avatar_letras = strtoupper(substr($_SESSION['nombres'], 0, 1) . substr($_SESSION['apellidos'], 0, 1));
+
+    // Contar solicitudes pendientes para badge del sidebar
+    $reservaModel = new \App\Models\Reserva();
+    $pendientes_count = $reservaModel->contarPendientes($rol_id ? $_SESSION['usuario_id'] : 0);
     ?>
 
     <div class="app-shell active" id="app-shell">
@@ -46,6 +50,9 @@
                                 <i class="fas fa-circle fa-fw"></i>
                             <?php endif; ?>
                             <?php echo htmlspecialchars($hijo['nombre']); ?>
+                            <?php if ($hijo['url'] === '/solicitudes' && $pendientes_count > 0): ?>
+                                <span class="sb-badge"><?php echo $pendientes_count > 99 ? '99+' : $pendientes_count; ?></span>
+                            <?php endif; ?>
                         </a>
                     <?php endforeach; ?>
                 <?php else: // Es un enlace principal sin sección superior ?>
@@ -57,6 +64,9 @@
                             <i class="fas fa-circle fa-fw"></i>
                         <?php endif; ?>
                         <?php echo htmlspecialchars($seccion['nombre']); ?>
+                        <?php if ($seccion['url'] === '/solicitudes' && $pendientes_count > 0): ?>
+                            <span class="sb-badge"><?php echo $pendientes_count > 99 ? '99+' : $pendientes_count; ?></span>
+                        <?php endif; ?>
                     </a>
                 <?php endif; ?>
             <?php endforeach; ?>

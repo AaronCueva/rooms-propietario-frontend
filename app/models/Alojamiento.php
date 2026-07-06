@@ -179,4 +179,17 @@ class Alojamiento
         $stmt->bindParam(':usuario_id', $usuario_id);
         return $stmt->execute();
     }
+
+    /**
+     * Cambiar el estado de un alojamiento (ej. a Ocupado)
+     */
+    public function cambiarEstado($alojamiento_id, $estado_codigo)
+    {
+        $query = "UPDATE alojamiento SET estado_codigo = :estado_codigo, modificado = CURRENT_TIMESTAMP
+                  WHERE alojamiento_id = :alojamiento_id";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':estado_codigo', $estado_codigo);
+        $stmt->bindParam(':alojamiento_id', $alojamiento_id);
+        return $stmt->execute();
+    }
 }
