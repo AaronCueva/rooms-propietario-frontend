@@ -33,12 +33,28 @@
                                     </label>
                                     <input type="file" id="foto_perfil" name="foto_perfil" class="d-none" accept="image/png, image/jpeg, image/webp">
                                 </div>
-                                <h5 class="fw-bold mb-1"><?php echo htmlspecialchars($usuario['nombres'] . ' ' . $usuario['apellido_paterno']); ?></h5>
-                                <p class="text-muted small mb-3">Propietario</p>
+                                <h5 class="fw-bold mb-1" style="font-size: 18px;"><?php echo htmlspecialchars($usuario['nombres'] . ' ' . $usuario['apellido_paterno']); ?></h5>
+                                <p class="text-muted mb-3" style="font-size: 14px;">Propietario · <?php echo htmlspecialchars($usuario['distrito_nombre'] ?? 'Lima'); ?></p>
                                 
-                                <div class="text-start mt-4 pt-4" style="border-top: 1px solid var(--line);">
-                                    <div class="mb-2"><i class="fas fa-envelope text-muted me-2" style="width: 16px;"></i> <span style="font-size: 14px;"><?php echo htmlspecialchars($usuario['correo']); ?></span></div>
-                                    <div class="mb-2"><i class="fas fa-phone text-muted me-2" style="width: 16px;"></i> <span style="font-size: 14px;"><?php echo htmlspecialchars($usuario['celular']); ?></span></div>
+                                <div class="mb-4">
+                                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2 fw-semibold" style="font-size: 13px;">
+                                        <i class="fas fa-check"></i> Identidad verificada
+                                    </span>
+                                </div>
+
+                                <div class="d-flex justify-content-center gap-3 mb-4">
+                                    <div class="rounded p-2 text-center" style="width: 110px; background-color: #F6F4F0;">
+                                        <div class="text-muted fw-bold mb-1" style="font-size: 11px; letter-spacing: 0.5px;">CUARTOS</div>
+                                        <div class="fw-bold fs-4 text-dark"><?php echo $total_cuartos; ?></div>
+                                    </div>
+                                    <div class="rounded p-2 text-center" style="width: 110px; background-color: #F6F4F0;">
+                                        <div class="text-muted fw-bold mb-1" style="font-size: 11px; letter-spacing: 0.5px;">RATING</div>
+                                        <div class="fw-bold fs-4 text-dark"><?php echo htmlspecialchars($calificacion); ?> <i class="fas fa-star text-dark" style="font-size: 16px;"></i></div>
+                                    </div>
+                                </div>
+
+                                <div class="d-grid">
+                                    <a href="/logout" class="btn btn-outline-secondary rounded-pill fw-bold" style="border-width: 1px; color: #000; border-color: #d1d5db; padding: 10px;">Cerrar sesión</a>
                                 </div>
                             </div>
                         </div>

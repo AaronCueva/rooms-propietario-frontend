@@ -21,6 +21,11 @@ class PerfilController extends Controller
         $usuario_id = $_SESSION['usuario_id'];
         $usuario = $this->usuarioModel->findById($usuario_id);
 
+        // Fetch cuartos and calificacion
+        $alojamientoModel = new \App\Models\Alojamiento();
+        $total_cuartos = count($alojamientoModel->obtenerPorUsuarioId($usuario_id));
+        $calificacion = $usuario['calificacion'] ? number_format($usuario['calificacion'], 1) : '5.0';
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $datos = [
                 'nombres' => $_POST['nombres'] ?? '',
@@ -73,6 +78,8 @@ class PerfilController extends Controller
 
         $this->render('propietario/perfil/index', [
             'usuario' => $usuario,
+            'total_cuartos' => $total_cuartos,
+            'calificacion' => $calificacion,
             'tipos_documento' => $tipos_documento,
             'titulo' => 'Mi Perfil'
         ]);
