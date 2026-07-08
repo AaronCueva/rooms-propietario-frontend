@@ -22,7 +22,10 @@ class Alojamiento
                     (SELECT m.url FROM multimedia m 
                      WHERE m.alojamiento_id = a.alojamiento_id 
                      AND m.habilitado = true 
-                     ORDER BY m.orden ASC LIMIT 1) AS foto_principal
+                     ORDER BY m.orden ASC LIMIT 1) AS foto_principal,
+                    (SELECT COUNT(f.favorito_id) FROM favorito f 
+                     WHERE f.alojamiento_id = a.alojamiento_id 
+                     AND f.habilitado = true) AS total_favoritos
                   FROM alojamiento a
                   LEFT JOIN ubicacion u ON a.ubicacion_id = u.ubicacion_id
                   WHERE a.usuario_id = :usuario_id AND a.habilitado = true
@@ -190,6 +193,104 @@ class Alojamiento
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':estado_codigo', $estado_codigo);
         $stmt->bindParam(':alojamiento_id', $alojamiento_id);
+        return $stmt->execute();
+    }
+
+    /**
+     * Obtener descuentos de un alojamiento
+     */
+    public function obtenerDescuentos($alojamiento_id)
+    {
+        $query = "SELECT descuento_id, nombre, monto, motivo, inicio, fin 
+                  FROM descuento 
+                  WHERE alojamiento_id = :alojamiento_id AND habilitado = true
+                  ORDER BY inicio DESC, creado DESC";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':alojamiento_id', $alojamiento_id);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Agregar descuento a un alojamiento
+     */
+    public function agregarDescuento($datos)
+    {
+        $query = "INSERT INTO descuento (
+                    nombre, monto, motivo, inicio, fin, alojamiento_id, habilitado
+                  ) VALUES (
+                    :nombre, :monto, :motivo, :inicio, :fin, :alojamiento_id, true
+                  )";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindValue(':nombre', $datos['nombre']);
+        $stmt->bindValue(':monto', $datos['monto']);
+        $stmt->bindValue(':motivo', $datos['motivo'] ?? null);
+        
+        // Manejar fechas vacías como NULL
+        $inicio = !empty($datos['inicio']) ? $datos['inicio'] : null;
+        $fin = !empty($datos['fin']) ? $datos['fin'] : null;
+        
+        $stmt->bindValue(':inicio', $inicio);
+        $stmt->bindValue(':fin', $fin);
+        $stmt->bindValue(':alojamiento_id', $datos['alojamiento_id']);
+        return $stmt->execute();
+    }
+
+    /**
+     * Eliminar (deshabilitar) descuento
+     */
+    public function eliminarDescuento($descuento_id, $alojamiento_id)
+    {
+        $query = "UPDATE descuento SET habilitado = false, modificado = CURRENT_TIMESTAMP 
+                  WHERE descuento_id = :descuento_id AND alojamiento_id = :alojamiento_id";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindValue(':descuento_id', $descuento_id);
+        $stmt->bindValue(':alojamiento_id', $alojamiento_id);
+        return $stmt->execute();
+    }
+
+    /**
+     * Obtener beneficios de un alojamiento
+     */
+    public function obtenerBeneficios($alojamiento_id)
+    {
+        $query = "SELECT beneficio_id, nombre, descripcion 
+                  FROM beneficio 
+                  WHERE alojamiento_id = :alojamiento_id AND habilitado = true
+                  ORDER BY nombre ASC";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':alojamiento_id', $alojamiento_id);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Agregar beneficio a un alojamiento
+     */
+    public function agregarBeneficio($datos)
+    {
+        $query = "INSERT INTO beneficio (
+                    nombre, descripcion, alojamiento_id, creado_fecha, habilitado
+                  ) VALUES (
+                    :nombre, :descripcion, :alojamiento_id, CURRENT_TIMESTAMP, true
+                  )";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindValue(':nombre', $datos['nombre']);
+        $stmt->bindValue(':descripcion', $datos['descripcion'] ?? null);
+        $stmt->bindValue(':alojamiento_id', $datos['alojamiento_id']);
+        return $stmt->execute();
+    }
+
+    /**
+     * Eliminar (deshabilitar) beneficio
+     */
+    public function eliminarBeneficio($beneficio_id, $alojamiento_id)
+    {
+        $query = "UPDATE beneficio SET habilitado = false, modificado = CURRENT_TIMESTAMP 
+                  WHERE beneficio_id = :beneficio_id AND alojamiento_id = :alojamiento_id";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindValue(':beneficio_id', $beneficio_id);
+        $stmt->bindValue(':alojamiento_id', $alojamiento_id);
         return $stmt->execute();
     }
 }

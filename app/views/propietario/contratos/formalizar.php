@@ -50,9 +50,16 @@
 
                         <div class="row g-3 mb-4">
                             <div class="col-md-4">
+                                <?php 
+                                $base_renta = $solicitud['monto_total'] > 0 ? $solicitud['monto_total'] : $solicitud['precio_mensual'];
+                                $monto_sugerido = floatval($base_renta) + floatval($total_servicios ?? 0);
+                                ?>
                                 <label class="form-label fw-semibold">Monto Renta Mensual (S/) <span class="text-danger">*</span></label>
                                 <input type="number" step="0.01" name="monto_renta" class="form-control" 
-                                       value="<?php echo htmlspecialchars($solicitud['monto_total'] > 0 ? $solicitud['monto_total'] : $solicitud['precio_mensual']); ?>" required>
+                                       value="<?php echo htmlspecialchars($monto_sugerido); ?>" required>
+                                <?php if (!empty($total_servicios) && $total_servicios > 0): ?>
+                                    <div class="form-text" style="font-size: 11px; color: var(--green);"><i class="fas fa-info-circle"></i> Incluye S/ <?php echo number_format($total_servicios, 2); ?> por servicios.</div>
+                                <?php endif; ?>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold">Monto Garantía (S/)</label>

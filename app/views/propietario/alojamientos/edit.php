@@ -28,6 +28,8 @@
         <div class="et-btn" onclick="switchTab('fotos', this)">Fotos</div>
         <div class="et-btn" onclick="switchTab('servicios', this)">Servicios</div>
         <div class="et-btn" onclick="switchTab('politicas', this)">Políticas de Convivencia</div>
+        <div class="et-btn" onclick="switchTab('descuentos', this)">Descuentos</div>
+        <div class="et-btn" onclick="switchTab('beneficios', this)">Beneficios</div>
     </div>
 
     <!-- TAB: DATOS GENERALES -->
@@ -271,6 +273,111 @@
                         <input type="text" name="nueva_politica" placeholder="Ej: Prohibido ingresar bicicletas a la habitación" required>
                     </div>
                     <button class="btn btn-primary" style="padding:13px 20px;">Crear y asignar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TAB: DESCUENTOS -->
+    <div id="pane-descuentos" class="et-pane">
+        <div class="card form-section">
+            <h3 style="margin-bottom:20px;">Descuentos Aplicables</h3>
+            
+            <?php foreach ($descuentos as $desc): ?>
+                <div class="list-item-row" style="align-items:flex-start;">
+                    <div>
+                        <div class="list-item-title"><i class="fas fa-tag text-success me-2"></i> <?php echo htmlspecialchars($desc['nombre']); ?> <span style="color:var(--green); font-family:var(--font-mono); font-weight:700;">(-S/ <?php echo number_format($desc['monto'], 2); ?>)</span></div>
+                        <div class="list-item-desc" style="margin-top:4px;">
+                            <?php if (!empty($desc['motivo'])): ?>
+                                <div><strong>Motivo:</strong> <?php echo htmlspecialchars($desc['motivo']); ?></div>
+                            <?php endif; ?>
+                            <?php if (!empty($desc['inicio']) || !empty($desc['fin'])): ?>
+                                <div style="margin-top:2px;">
+                                    <strong>Vigencia:</strong> 
+                                    <?php echo !empty($desc['inicio']) ? date('d/m/Y', strtotime($desc['inicio'])) : ''; ?> 
+                                    - 
+                                    <?php echo !empty($desc['fin']) ? date('d/m/Y', strtotime($desc['fin'])) : ''; ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <form method="POST" action="/alojamientos/descuentos/eliminar" style="margin-top: 4px;">
+                        <input type="hidden" name="alojamiento_id" value="<?php echo $alojamiento['alojamiento_id']; ?>">
+                        <input type="hidden" name="descuento_id" value="<?php echo $desc['descuento_id']; ?>">
+                        <button class="btn btn-ghost btn-sm" style="color:var(--red);border:none;">Remover</button>
+                    </form>
+                </div>
+            <?php endforeach; ?>
+
+            <form method="POST" action="/alojamientos/descuentos/agregar" style="margin-top:24px; padding-top:24px; border-top:1px dashed var(--line);">
+                <input type="hidden" name="alojamiento_id" value="<?php echo $alojamiento['alojamiento_id']; ?>">
+                <h6 style="font-weight:700; margin-bottom:16px;">Agregar nuevo descuento</h6>
+                <div class="form-grid">
+                    <div class="field" style="grid-column:1 / -1;">
+                        <label>Nombre del descuento (Ej: Descuento de Verano) <span class="req">*</span></label>
+                        <input type="text" name="nombre" required>
+                    </div>
+                    <div class="field">
+                        <label>Monto a descontar (S/) <span class="req">*</span></label>
+                        <input type="number" name="monto" min="1" step="0.5" required>
+                    </div>
+                    <div class="field">
+                        <label>Motivo / Condición</label>
+                        <input type="text" name="motivo" placeholder="Ej: Para estudiantes con carnet">
+                    </div>
+                    <div class="field">
+                        <label>Fecha inicio vigencia</label>
+                        <input type="date" name="inicio">
+                    </div>
+                    <div class="field">
+                        <label>Fecha fin vigencia</label>
+                        <input type="date" name="fin">
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                    <button class="btn btn-dark" style="padding:10px 20px;">Guardar Descuento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TAB: BENEFICIOS -->
+    <div id="pane-beneficios" class="et-pane">
+        <div class="card form-section">
+            <h3 style="margin-bottom:20px;">Beneficios Extras</h3>
+            <p class="text-muted mb-4" style="font-size:14px;">Los beneficios son ventajas intangibles o extras que no tienen precio (ej: Limpieza quincenal, Zona compartida de parrilla, etc).</p>
+            
+            <?php foreach ($beneficios as $ben): ?>
+                <div class="list-item-row" style="align-items:flex-start;">
+                    <div>
+                        <div class="list-item-title"><i class="fas fa-gift text-purple me-2" style="color:#7C3AED;"></i> <?php echo htmlspecialchars($ben['nombre']); ?></div>
+                        <?php if (!empty($ben['descripcion'])): ?>
+                            <div class="list-item-desc" style="margin-top:4px;"><?php echo htmlspecialchars($ben['descripcion']); ?></div>
+                        <?php endif; ?>
+                    </div>
+                    <form method="POST" action="/alojamientos/beneficios/eliminar" style="margin-top: 4px;">
+                        <input type="hidden" name="alojamiento_id" value="<?php echo $alojamiento['alojamiento_id']; ?>">
+                        <input type="hidden" name="beneficio_id" value="<?php echo $ben['beneficio_id']; ?>">
+                        <button class="btn btn-ghost btn-sm" style="color:var(--red);border:none;">Remover</button>
+                    </form>
+                </div>
+            <?php endforeach; ?>
+
+            <form method="POST" action="/alojamientos/beneficios/agregar" style="margin-top:24px; padding-top:24px; border-top:1px dashed var(--line);">
+                <input type="hidden" name="alojamiento_id" value="<?php echo $alojamiento['alojamiento_id']; ?>">
+                <h6 style="font-weight:700; margin-bottom:16px;">Agregar nuevo beneficio</h6>
+                <div class="form-grid">
+                    <div class="field" style="grid-column:1 / -1;">
+                        <label>Nombre del beneficio <span class="req">*</span></label>
+                        <input type="text" name="nombre" placeholder="Ej: Uso de lavandería sin costo" required>
+                    </div>
+                    <div class="field" style="grid-column:1 / -1;">
+                        <label>Descripción detallada</label>
+                        <textarea name="descripcion" rows="2" style="width:100%;padding:12px 14px;border-radius:11px;border:1.5px solid var(--line);background:#FBFAF8;font-size:14px;font-family:var(--font-body);color:var(--ink);resize:vertical;"></textarea>
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                    <button class="btn btn-dark" style="padding:10px 20px;">Guardar Beneficio</button>
                 </div>
             </form>
         </div>

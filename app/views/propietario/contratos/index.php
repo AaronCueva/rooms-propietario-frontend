@@ -92,7 +92,7 @@
 
                             <div class="mt-auto pt-3 d-flex justify-content-between align-items-center">
                                 <div style="font-family:var(--font-mono); font-size:15px; font-weight:600; color:var(--primary);">
-                                    S/ <?php echo number_format($contrato['monto_renta'], 0, '.', ','); ?> <span style="font-size:11px; color:var(--ink-faint); font-weight:400; font-family:var(--font-sans);">/mes</span>
+                                    S/ <?php echo number_format($contrato['total_pagar'], 0, '.', ','); ?> <span style="font-size:11px; color:var(--ink-faint); font-weight:400; font-family:var(--font-sans);">/mes</span>
                                 </div>
                                 <a href="/contratos/detalle?id=<?php echo $contrato['contrato_id']; ?>" class="btn btn-light btn-sm" style="border-radius:8px;">Ver detalle</a>
                             </div>

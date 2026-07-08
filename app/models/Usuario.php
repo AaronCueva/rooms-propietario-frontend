@@ -81,6 +81,8 @@ class Usuario
                     telefono = :telefono,
                     descripcion = :descripcion,
                     genero_codigo = :genero_codigo,
+                    tipo_documento_codigo = :tipo_documento_codigo,
+                    numero_documento = :numero_documento,
                     ubicacion_id = :ubicacion_id,
                     universidad_id = :universidad_id,
                     modificado = CURRENT_TIMESTAMP";
@@ -101,6 +103,8 @@ class Usuario
         $stmt->bindValue(':telefono', $datos['telefono'] ?? null);
         $stmt->bindValue(':descripcion', $datos['descripcion'] ?? null);
         $stmt->bindValue(':genero_codigo', $datos['genero_codigo'] ?? null);
+        $stmt->bindValue(':tipo_documento_codigo', $datos['tipo_documento_codigo'] ?? null);
+        $stmt->bindValue(':numero_documento', $datos['numero_documento'] ?? null);
         $stmt->bindValue(':ubicacion_id', !empty($datos['ubicacion_id']) ? $datos['ubicacion_id'] : null);
         $stmt->bindValue(':universidad_id', !empty($datos['universidad_id']) ? $datos['universidad_id'] : null);
         $stmt->bindValue(':id', $id);

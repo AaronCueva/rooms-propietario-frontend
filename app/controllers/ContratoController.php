@@ -7,6 +7,7 @@ use App\Models\Reserva;
 use App\Models\Alojamiento;
 use App\Models\Multimedia;
 use App\Models\Usuario;
+use App\Models\Pago;
 
 class ContratoController extends Controller
 {
@@ -15,6 +16,7 @@ class ContratoController extends Controller
     private $alojamientoModel;
     private $multimediaModel;
     private $usuarioModel;
+    private $pagoModel;
 
     public function __construct()
     {
@@ -26,6 +28,7 @@ class ContratoController extends Controller
         $this->alojamientoModel = new Alojamiento();
         $this->multimediaModel = new Multimedia();
         $this->usuarioModel = new Usuario();
+        $this->pagoModel = new Pago();
     }
 
     /**
@@ -37,6 +40,17 @@ class ContratoController extends Controller
         $estado = $_GET['estado'] ?? null;
         
         $contratos = $this->contratoModel->obtenerPorPropietario($usuario_id, $estado);
+
+        // Sumar servicios al total a pagar para mostrar en el listado
+        foreach ($contratos as &$c) {
+            $servicios = $this->contratoModel->obtenerServiciosPorAlojamiento($c['alojamiento_id']);
+            $total_servicios = 0;
+            foreach ($servicios as $srv) {
+                $total_servicios += floatval($srv['precio'] ?? 0);
+            }
+            $c['total_pagar'] = floatval($c['monto_renta']) + $total_servicios;
+        }
+        unset($c);
 
         $this->render('propietario/contratos/index', [
             'contratos' => $contratos,
@@ -64,8 +78,15 @@ class ContratoController extends Controller
             $this->redirect('/solicitudes/detalle?id=' . $reserva_id);
         }
 
+        $servicios = $this->contratoModel->obtenerServiciosPorAlojamiento($solicitud['alojamiento_id']);
+        $total_servicios = 0;
+        foreach ($servicios as $srv) {
+            $total_servicios += floatval($srv['precio'] ?? 0);
+        }
+
         $this->render('propietario/contratos/formalizar', [
             'solicitud' => $solicitud,
+            'total_servicios' => $total_servicios,
             'titulo' => 'Formalizar Contrato'
         ]);
     }
@@ -135,14 +156,28 @@ class ContratoController extends Controller
                 'fecha_fin' => $_POST['fecha_fin'],
                 'monto_renta' => $_POST['monto_renta'],
                 'monto_garantia' => $_POST['monto_garantia'] ?? 0,
-                'fecha_pago_mensual' => $_POST['fecha_pago_mensual'] ?? 1
+                'fecha_pago_mensual' => $_POST['fecha_pago_mensual'] ?? 1,
+                'cargo_plataforma' => 3.00 // 3% por defecto
             ];
 
             $contrato_id = $this->contratoModel->crear($datosContrato);
 
             if ($contrato_id) {
+                // Generar cuotas (pagos)
+                $this->pagoModel->generarCuotas(
+                    $contrato_id,
+                    $_POST['monto_renta'],
+                    $_POST['fecha_inicio'],
+                    $_POST['fecha_fin'],
+                    $_POST['fecha_pago_mensual'] ?? 1,
+                    $usuario_id
+                );
+
                 // Cambiar estado alojamiento a OCUPADO (EPA004)
                 $this->alojamientoModel->cambiarEstado($solicitud['alojamiento_id'], 'EPA004');
+                
+                // Cambiar estado de la reserva a FORMALIZADO (ESRE006)
+                $this->reservaModel->cambiarEstado($reserva_id, 'ESRE006');
 
                 $this->setFlash('success', 'Contrato formalizado correctamente. El alojamiento ahora figura como ocupado.');
                 $this->redirect('/contratos/detalle?id=' . $contrato_id);
@@ -177,6 +212,10 @@ class ContratoController extends Controller
 
         $this->render('propietario/contratos/detalle', [
             'contrato' => $contrato,
+            'servicios' => $this->contratoModel->obtenerServiciosPorAlojamiento($contrato['alojamiento_id']),
+            'politicas' => $this->contratoModel->obtenerPoliticasPorAlojamiento($contrato['alojamiento_id']),
+            'descuentos' => $this->contratoModel->obtenerDescuentosPorAlojamiento($contrato['alojamiento_id']),
+            'beneficios' => $this->contratoModel->obtenerBeneficiosPorAlojamiento($contrato['alojamiento_id']),
             'titulo' => 'Detalle del Contrato'
         ]);
     }
@@ -192,6 +231,8 @@ class ContratoController extends Controller
 
         $usuario_id = $_SESSION['usuario_id'];
         $contrato_id = $_POST['contrato_id'] ?? null;
+        $from_inquilino = $_POST['from_inquilino'] ?? false;
+        $redirect_url = $from_inquilino ? '/inquilinos/detalle?id=' . $contrato_id : '/contratos/detalle?id=' . $contrato_id;
 
         if (!$contrato_id) {
             $this->redirect('/contratos');
@@ -200,7 +241,7 @@ class ContratoController extends Controller
         $contrato = $this->contratoModel->obtenerDetalle($contrato_id, $usuario_id);
         if (!$contrato || $contrato['estado_codigo'] !== 'ESCO001') {
             $this->setFlash('error', 'El contrato no se puede finalizar.');
-            $this->redirect('/contratos/detalle?id=' . $contrato_id);
+            $this->redirect($redirect_url);
         }
 
         // Marcar como finalizado
@@ -213,7 +254,7 @@ class ContratoController extends Controller
             $this->setFlash('error', 'Error al finalizar el contrato.');
         }
 
-        $this->redirect('/contratos/detalle?id=' . $contrato_id);
+        $this->redirect($redirect_url);
     }
 
     /**
@@ -228,21 +269,23 @@ class ContratoController extends Controller
         $usuario_id = $_SESSION['usuario_id'];
         $contrato_id = $_POST['contrato_id'] ?? null;
         $puntuacion = (int)($_POST['puntuacion'] ?? 0);
+        $from_inquilino = $_POST['from_inquilino'] ?? false;
+        $redirect_url = $from_inquilino ? '/inquilinos/detalle?id=' . $contrato_id : '/contratos/detalle?id=' . $contrato_id;
 
         if ($puntuacion < 1 || $puntuacion > 5) {
             $this->setFlash('error', 'Puntuación inválida.');
-            $this->redirect('/contratos/detalle?id=' . $contrato_id);
+            $this->redirect($redirect_url);
         }
 
         $contrato = $this->contratoModel->obtenerDetalle($contrato_id, $usuario_id);
         if (!$contrato || $contrato['estado_codigo'] !== 'ESCO002') {
             $this->setFlash('error', 'El contrato debe estar finalizado para calificar.');
-            $this->redirect('/contratos/detalle?id=' . $contrato_id);
+            $this->redirect($redirect_url);
         }
 
         if (!empty($contrato['propietario_califico'])) {
             $this->setFlash('error', 'Ya has calificado a este inquilino por este contrato.');
-            $this->redirect('/contratos/detalle?id=' . $contrato_id);
+            $this->redirect($redirect_url);
         }
 
         // Actualizar promedio en usuario (inquilino)
@@ -253,6 +296,6 @@ class ContratoController extends Controller
             $this->setFlash('error', 'No se pudo registrar la calificación.');
         }
 
-        $this->redirect('/contratos/detalle?id=' . $contrato_id);
+        $this->redirect($redirect_url);
     }
 }

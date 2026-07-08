@@ -89,6 +89,9 @@ button { font-family: inherit; cursor: pointer; }
 .badge-green { background: var(--green-wash); color: var(--green); }
 .badge-amber { background: var(--amber-wash); color: var(--amber); }
 .badge-red { background: var(--red-wash); color: var(--red); }
+.badge-blue { background: var(--blue-wash); color: var(--blue); }
+.badge-faint { background: var(--gray-100); color: var(--ink-faint); }
+.badge-purple { background: #F3E8FF; color: #7C3AED; }
 
 /* AUTH VIEWS */
 .auth-view { min-height: 100vh; display: flex; align-items: stretch; display: none; }

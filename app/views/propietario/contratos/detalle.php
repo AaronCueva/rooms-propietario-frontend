@@ -73,11 +73,24 @@ $iniciales = strtoupper(substr($contrato['inquilino_nombres'] ?? 'I', 0, 1) . su
                         <i class="fas fa-money-bill-wave text-success me-2"></i> Detalles Financieros
                     </h6>
                     <div class="row g-4 mb-2">
+                        <?php 
+                        $total_servicios = 0;
+                        if (!empty($servicios)) {
+                            foreach ($servicios as $srv) {
+                                $total_servicios += floatval($srv['precio'] ?? 0);
+                            }
+                        }
+                        $total_pagar = floatval($contrato['monto_renta']) + $total_servicios;
+                        ?>
                         <div class="col-sm-6">
                             <div class="p-3" style="background: var(--gray-50); border-radius: 12px; border: 1px solid var(--line);">
-                                <div class="text-muted" style="font-size: 13px; margin-bottom:4px;">Renta Mensual</div>
-                                <div style="font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--primary);">
+                                <div class="text-muted" style="font-size: 13px; margin-bottom:4px;">Renta Mensual Base</div>
+                                <div style="font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--ink);">
                                     S/ <?php echo number_format($contrato['monto_renta'], 2, '.', ','); ?>
+                                </div>
+                                <div class="mt-2 pt-2 border-top d-flex justify-content-between align-items-center">
+                                    <span class="text-muted" style="font-size: 12px;">Servicios: S/ <?php echo number_format($total_servicios, 2); ?></span>
+                                    <div style="font-size: 12px;">Total: <span style="font-family: var(--font-mono); font-size: 14px; font-weight: 700; color: var(--primary);">S/ <?php echo number_format($total_pagar, 2); ?></span></div>
                                 </div>
                             </div>
                         </div>
@@ -90,6 +103,104 @@ $iniciales = strtoupper(substr($contrato['inquilino_nombres'] ?? 'I', 0, 1) . su
                             </div>
                         </div>
                     </div>
+
+                    <!-- Comisión de Plataforma -->
+                    <div class="mt-4 p-3" style="background: #FFF7ED; border-radius: 12px; border: 1px solid #FDBA74;">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <div style="font-size: 13px; font-weight: 600; color: #92400E;"><i class="fas fa-percentage me-1"></i> Comisión de Plataforma</div>
+                                <div class="text-muted" style="font-size: 12px;">Se retendrá este porcentaje por cada pago procesado.</div>
+                            </div>
+                            <div style="font-family: var(--font-mono); font-size: 20px; font-weight: 700; color: #92400E;">
+                                <?php echo number_format($contrato['cargo_plataforma'] ?? 3, 1); ?>%
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Servicios Incluidos -->
+                    <?php if (!empty($servicios)): ?>
+                    <h6 class="mb-3 mt-5 pb-3 border-bottom" style="font-family: var(--font-display); font-weight: 700;">
+                        <i class="fas fa-concierge-bell text-primary me-2"></i> Servicios Incluidos
+                    </h6>
+                    <div class="row g-2 mb-2">
+                        <?php foreach ($servicios as $srv): ?>
+                            <div class="col-sm-6">
+                                <div class="d-flex justify-content-between align-items-center p-2 px-3" style="background: var(--gray-50); border-radius: 8px; font-size: 13.5px;">
+                                    <span style="color: var(--ink); font-weight: 500;"><i class="fas fa-check text-success me-2" style="font-size:11px;"></i><?php echo htmlspecialchars($srv['nombre']); ?></span>
+                                    <span style="font-family: var(--font-mono); font-weight: 600; color: var(--ink-faint);">S/ <?php echo number_format($srv['precio'] ?? 0, 2); ?></span>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="text-end mt-2" style="font-size: 13px;">
+                        <span class="text-muted">Total servicios:</span>
+                        <span style="font-family: var(--font-mono); font-weight: 700; color: var(--ink);">S/ <?php echo number_format($total_servicios, 2); ?></span>
+                    </div>
+                    <?php endif; ?>
+
+                    <!-- Políticas de la Casa -->
+                    <?php if (!empty($politicas)): ?>
+                    <h6 class="mb-3 mt-5 pb-3 border-bottom" style="font-family: var(--font-display); font-weight: 700;">
+                        <i class="fas fa-shield-alt text-danger me-2"></i> Políticas de la Casa
+                    </h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        <?php foreach ($politicas as $pol): ?>
+                            <span class="px-3 py-2" style="background: var(--red-wash); color: var(--red); border-radius: 8px; font-size: 13px; font-weight: 500;">
+                                <i class="fas fa-ban me-1" style="font-size:11px;"></i> <?php echo htmlspecialchars($pol['nombre']); ?>
+                            </span>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endif; ?>
+
+                    <!-- Descuentos -->
+                    <?php if (!empty($descuentos)): ?>
+                    <h6 class="mb-3 mt-5 pb-3 border-bottom" style="font-family: var(--font-display); font-weight: 700;">
+                        <i class="fas fa-tags text-success me-2"></i> Descuentos
+                    </h6>
+                    <?php foreach ($descuentos as $desc): ?>
+                        <div class="p-3 mb-2" style="background: var(--green-wash); border-radius: 10px; border: 1px solid rgba(34,197,94,0.2);">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div style="font-weight: 600; font-size: 14px; color: var(--green);"><?php echo htmlspecialchars($desc['nombre']); ?></div>
+                                    <?php if (!empty($desc['motivo'])): ?>
+                                        <div class="text-muted" style="font-size: 12px;"><?php echo htmlspecialchars($desc['motivo']); ?></div>
+                                    <?php endif; ?>
+                                    <?php if (!empty($desc['inicio']) || !empty($desc['fin'])): ?>
+                                        <div class="text-muted" style="font-size: 11.5px; margin-top: 2px;">
+                                            <i class="fas fa-calendar-alt me-1"></i>
+                                            <?php echo !empty($desc['inicio']) ? date('d/m/Y', strtotime($desc['inicio'])) : ''; ?>
+                                            <?php echo (!empty($desc['inicio']) && !empty($desc['fin'])) ? ' — ' : ''; ?>
+                                            <?php echo !empty($desc['fin']) ? date('d/m/Y', strtotime($desc['fin'])) : ''; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                                <div style="font-family: var(--font-mono); font-size: 16px; font-weight: 700; color: var(--green);">
+                                    -S/ <?php echo number_format($desc['monto'], 2); ?>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                    <?php endif; ?>
+
+                    <!-- Beneficios -->
+                    <?php if (!empty($beneficios)): ?>
+                    <h6 class="mb-3 mt-5 pb-3 border-bottom" style="font-family: var(--font-display); font-weight: 700;">
+                        <i class="fas fa-gift text-purple me-2" style="color: #7C3AED;"></i> Beneficios
+                    </h6>
+                    <?php foreach ($beneficios as $ben): ?>
+                        <div class="d-flex align-items-start gap-3 mb-3">
+                            <div style="width:32px; height:32px; border-radius:8px; background:#F3E8FF; display:flex; align-items:center; justify-content:center; color:#7C3AED; flex-shrink:0; font-size:14px;">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div>
+                                <div style="font-weight: 600; font-size: 14px; color: var(--ink);"><?php echo htmlspecialchars($ben['nombre']); ?></div>
+                                <?php if (!empty($ben['descripcion'])): ?>
+                                    <div class="text-muted" style="font-size: 13px;"><?php echo htmlspecialchars($ben['descripcion']); ?></div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
             </div>
             

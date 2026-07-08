@@ -6,6 +6,7 @@ $badge_map = [
     'ESRE003' => ['label' => 'Rechazada',   'class' => 'badge-red',   'icon' => 'fa-times-circle'],
     'ESRE004' => ['label' => 'Finalizada',  'class' => 'badge-faint', 'icon' => 'fa-hourglass-end'],
     'ESRE005' => ['label' => 'En revisión', 'class' => 'badge-blue',  'icon' => 'fa-eye'],
+    'ESRE006' => ['label' => 'Formalizada', 'class' => 'badge-purple','icon' => 'fa-file-signature'],
 ];
 $estado  = $solicitud['estado_codigo'];
 $badge   = $badge_map[$estado] ?? ['label' => $estado, 'class' => 'badge-faint', 'icon' => 'fa-circle'];

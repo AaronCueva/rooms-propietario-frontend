@@ -97,6 +97,15 @@ class SolicitudController extends Controller
             $this->redirect('/solicitudes/detalle?id=' . $reserva_id);
         }
 
+        // Validar que el alojamiento no esté ocupado
+        $alojamientoModel = new \App\Models\Alojamiento();
+        $alojamiento = $alojamientoModel->obtenerPorId($solicitud['alojamiento_id'], $usuario_id);
+        
+        if ($alojamiento && $alojamiento['estado_codigo'] === 'EPA004') {
+            $this->setFlash('error', 'No puedes aprobar la solicitud porque el alojamiento ya se encuentra ocupado.');
+            $this->redirect('/solicitudes/detalle?id=' . $reserva_id);
+        }
+
         $ok = $this->reservaModel->cambiarEstado($reserva_id, 'ESRE002');
 
         if ($ok) {

@@ -42,6 +42,11 @@
                             <?php else: ?>
                                 <span class="badge badge-red">Inactivo</span>
                             <?php endif; ?>
+                            <?php if (!empty($aloj['total_favoritos']) && $aloj['total_favoritos'] > 0): ?>
+                                <span class="badge" style="background: rgba(255, 255, 255, 0.9); color: var(--red); box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-weight: 600; margin-left: 4px;">
+                                    <i class="fas fa-heart"></i> <?php echo $aloj['total_favoritos']; ?>
+                                </span>
+                            <?php endif; ?>
                         </div>
                     </div>
                     <div class="prop-body">

@@ -197,6 +197,10 @@ class AlojamientoController extends Controller
         $servicios_asignados = $this->alojamientoServicioModel->obtenerPorAlojamiento($alojamiento_id);
         $politicas_asignadas = $this->alojamientoPoliticaModel->obtenerPorAlojamiento($alojamiento_id);
         
+        // Descuentos y beneficios
+        $descuentos = $this->alojamientoModel->obtenerDescuentos($alojamiento_id);
+        $beneficios = $this->alojamientoModel->obtenerBeneficios($alojamiento_id);
+
         // Catálogos
         $servicios_disponibles = $this->servicioModel->obtenerTodos();
         $politicas_disponibles = $this->politicaModel->obtenerTodos();
@@ -210,6 +214,8 @@ class AlojamientoController extends Controller
             'fotos' => $fotos,
             'servicios_asignados' => $servicios_asignados,
             'politicas_asignadas' => $politicas_asignadas,
+            'descuentos' => $descuentos,
+            'beneficios' => $beneficios,
             'servicios_disponibles' => $servicios_disponibles,
             'politicas_disponibles' => $politicas_disponibles,
             'titulo' => 'Editar alojamiento'
@@ -407,6 +413,93 @@ class AlojamientoController extends Controller
             $this->setFlash('success', 'Foto eliminada.');
         }
 
+        $this->redirect('/alojamientos/editar?id=' . $alojamiento_id);
+    }
+
+    /**
+     * Agregar descuento
+     */
+    public function agregarDescuento()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') $this->redirect('/alojamientos');
+        
+        $alojamiento_id = $_POST['alojamiento_id'] ?? null;
+        if (!$alojamiento_id) $this->redirect('/alojamientos');
+
+        $datos = [
+            'alojamiento_id' => $alojamiento_id,
+            'nombre' => $_POST['nombre'] ?? '',
+            'monto' => $_POST['monto'] ?? 0,
+            'motivo' => $_POST['motivo'] ?? null,
+            'inicio' => $_POST['inicio'] ?? null,
+            'fin' => $_POST['fin'] ?? null,
+        ];
+
+        if ($this->alojamientoModel->agregarDescuento($datos)) {
+            $this->setFlash('success', 'Descuento agregado.');
+        } else {
+            $this->setFlash('error', 'Error al agregar descuento.');
+        }
+        
+        $this->redirect('/alojamientos/editar?id=' . $alojamiento_id);
+    }
+
+    /**
+     * Eliminar descuento
+     */
+    public function eliminarDescuento()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') $this->redirect('/alojamientos');
+        
+        $alojamiento_id = $_POST['alojamiento_id'] ?? null;
+        $descuento_id = $_POST['descuento_id'] ?? null;
+        
+        if ($alojamiento_id && $descuento_id) {
+            $this->alojamientoModel->eliminarDescuento($descuento_id, $alojamiento_id);
+            $this->setFlash('success', 'Descuento eliminado.');
+        }
+        $this->redirect('/alojamientos/editar?id=' . $alojamiento_id);
+    }
+
+    /**
+     * Agregar beneficio
+     */
+    public function agregarBeneficio()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') $this->redirect('/alojamientos');
+        
+        $alojamiento_id = $_POST['alojamiento_id'] ?? null;
+        if (!$alojamiento_id) $this->redirect('/alojamientos');
+
+        $datos = [
+            'alojamiento_id' => $alojamiento_id,
+            'nombre' => $_POST['nombre'] ?? '',
+            'descripcion' => $_POST['descripcion'] ?? null,
+        ];
+
+        if ($this->alojamientoModel->agregarBeneficio($datos)) {
+            $this->setFlash('success', 'Beneficio agregado.');
+        } else {
+            $this->setFlash('error', 'Error al agregar beneficio.');
+        }
+        
+        $this->redirect('/alojamientos/editar?id=' . $alojamiento_id);
+    }
+
+    /**
+     * Eliminar beneficio
+     */
+    public function eliminarBeneficio()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') $this->redirect('/alojamientos');
+        
+        $alojamiento_id = $_POST['alojamiento_id'] ?? null;
+        $beneficio_id = $_POST['beneficio_id'] ?? null;
+        
+        if ($alojamiento_id && $beneficio_id) {
+            $this->alojamientoModel->eliminarBeneficio($beneficio_id, $alojamiento_id);
+            $this->setFlash('success', 'Beneficio eliminado.');
+        }
         $this->redirect('/alojamientos/editar?id=' . $alojamiento_id);
     }
 }
