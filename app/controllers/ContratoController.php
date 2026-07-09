@@ -115,33 +115,34 @@ class ContratoController extends Controller
             $this->redirect('/solicitudes');
         }
 
-        // Subir archivo PDF
+        // Subir documento del contrato — Azure Blob Storage
         if (!isset($_FILES['documento']) || $_FILES['documento']['error'] !== UPLOAD_ERR_OK) {
-            $this->setFlash('error', 'Debe subir el documento del contrato (PDF).');
+            $this->setFlash('error', 'Debe subir el documento del contrato (PDF o imagen).');
             $this->redirect('/contratos/formalizar?reserva_id=' . $reserva_id);
         }
 
         $archivo = $_FILES['documento'];
         $extension = strtolower(pathinfo($archivo['name'], PATHINFO_EXTENSION));
-        
-        if ($extension !== 'pdf') {
-            $this->setFlash('error', 'El documento debe ser un archivo PDF.');
+        $allowed = ['pdf', 'jpg', 'jpeg', 'png', 'webp'];
+
+        if (!in_array($extension, $allowed)) {
+            $this->setFlash('error', 'El documento debe ser PDF, JPG, PNG o WEBP.');
             $this->redirect('/contratos/formalizar?reserva_id=' . $reserva_id);
         }
 
-        // Directorio de uploads (local)
-        $uploadDir = __DIR__ . '/../../public/uploads/contratos/';
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0777, true);
+        $nuevoNombre = 'contratos/contrato_' . $reserva_id . '_' . time() . '.' . $extension;
+
+        $mimeType = 'application/octet-stream';
+        if (function_exists('mime_content_type')) {
+            $mimeType = mime_content_type($archivo['tmp_name']);
         }
+        if (!$mimeType) $mimeType = 'application/octet-stream';
 
-        $nuevoNombre = 'contrato_' . $reserva_id . '_' . time() . '.pdf';
-        $rutaDestino = $uploadDir . $nuevoNombre;
-        $urlBD = '/public/uploads/contratos/' . $nuevoNombre;
+        $azureUrl = \App\Core\AzureStorage::uploadFile($archivo['tmp_name'], $nuevoNombre, $mimeType);
 
-        if (move_uploaded_file($archivo['tmp_name'], $rutaDestino)) {
+        if ($azureUrl) {
             // Guardar en multimedia
-            $multimedia_id = $this->multimediaModel->guardarDocumentoContrato($urlBD, $archivo['name']);
+            $multimedia_id = $this->multimediaModel->guardarDocumentoContrato($azureUrl, $archivo['name']);
 
             if (!$multimedia_id) {
                 $this->setFlash('error', 'Error al registrar el documento en BD.');
@@ -175,7 +176,7 @@ class ContratoController extends Controller
 
                 // Cambiar estado alojamiento a OCUPADO (EPA004)
                 $this->alojamientoModel->cambiarEstado($solicitud['alojamiento_id'], 'EPA004');
-                
+
                 // Cambiar estado de la reserva a FORMALIZADO (ESRE006)
                 $this->reservaModel->cambiarEstado($reserva_id, 'ESRE006');
 
@@ -186,7 +187,7 @@ class ContratoController extends Controller
                 $this->redirect('/contratos/formalizar?reserva_id=' . $reserva_id);
             }
         } else {
-            $this->setFlash('error', 'Error al subir el archivo al servidor.');
+            $this->setFlash('error', 'Error al subir el documento a Azure Blob Storage.');
             $this->redirect('/contratos/formalizar?reserva_id=' . $reserva_id);
         }
     }
@@ -216,8 +217,45 @@ class ContratoController extends Controller
             'politicas' => $this->contratoModel->obtenerPoliticasPorAlojamiento($contrato['alojamiento_id']),
             'descuentos' => $this->contratoModel->obtenerDescuentosPorAlojamiento($contrato['alojamiento_id']),
             'beneficios' => $this->contratoModel->obtenerBeneficiosPorAlojamiento($contrato['alojamiento_id']),
+            'resenas' => (new \App\Models\Resena())->getByContratoId($contrato_id),
             'titulo' => 'Detalle del Contrato'
         ]);
+    }
+
+    /**
+     * El propietario responde a una reseña del contrato (tabla resena)
+     */
+    public function responderResena()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/contratos');
+        }
+
+        $usuario_id = $_SESSION['usuario_id'];
+        $contrato_id = $_POST['contrato_id'] ?? null;
+        $resena_id = $_POST['resena_id'] ?? null;
+        $respuesta = trim($_POST['respuesta'] ?? '');
+
+        if (!$contrato_id || !$resena_id || $respuesta === '') {
+            $this->setFlash('error', 'Datos inválidos para responder la reseña.');
+            $this->redirect('/contratos/detalle?id=' . $contrato_id);
+        }
+
+        // Verificar que el contrato pertenece al propietario
+        $contrato = $this->contratoModel->obtenerDetalle($contrato_id, $usuario_id);
+        if (!$contrato) {
+            $this->setFlash('error', 'Contrato no encontrado.');
+            $this->redirect('/contratos');
+        }
+
+        $resenaModel = new \App\Models\Resena();
+        if ($resenaModel->responder($resena_id, $usuario_id, $respuesta)) {
+            $this->setFlash('success', 'Respuesta publicada correctamente.');
+        } else {
+            $this->setFlash('error', 'No se pudo guardar la respuesta.');
+        }
+
+        $this->redirect('/contratos/detalle?id=' . $contrato_id);
     }
 
     /**

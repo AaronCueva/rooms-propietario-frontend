@@ -26,6 +26,16 @@
     // Contar solicitudes pendientes para badge del sidebar
     $reservaModel = new \App\Models\Reserva();
     $pendientes_count = $reservaModel->contarPendientes($rol_id ? $_SESSION['usuario_id'] : 0);
+
+    // Contar mensajes no leídos para badge del link "Mensajes"
+    $no_leidos_chat = 0;
+    if (isset($_SESSION['usuario_id'])) {
+        try {
+            $no_leidos_chat = (new \App\Models\Chat())->contarNoLeidos($_SESSION['usuario_id']);
+        } catch (\Throwable $e) {
+            $no_leidos_chat = 0;
+        }
+    }
     ?>
 
     <div class="app-shell active" id="app-shell">
@@ -53,6 +63,9 @@
                             <?php if ($hijo['url'] === '/solicitudes' && $pendientes_count > 0): ?>
                                 <span class="sb-badge"><?php echo $pendientes_count > 99 ? '99+' : $pendientes_count; ?></span>
                             <?php endif; ?>
+                            <?php if ($hijo['url'] === '/mensajes' && $no_leidos_chat > 0): ?>
+                                <span class="sb-badge"><?php echo $no_leidos_chat > 99 ? '99+' : $no_leidos_chat; ?></span>
+                            <?php endif; ?>
                         </a>
                     <?php endforeach; ?>
                 <?php else: // Es un enlace principal sin sección superior ?>
@@ -66,6 +79,9 @@
                         <?php echo htmlspecialchars($seccion['nombre']); ?>
                         <?php if ($seccion['url'] === '/solicitudes' && $pendientes_count > 0): ?>
                             <span class="sb-badge"><?php echo $pendientes_count > 99 ? '99+' : $pendientes_count; ?></span>
+                        <?php endif; ?>
+                        <?php if ($seccion['url'] === '/mensajes' && $no_leidos_chat > 0): ?>
+                            <span class="sb-badge"><?php echo $no_leidos_chat > 99 ? '99+' : $no_leidos_chat; ?></span>
                         <?php endif; ?>
                     </a>
                 <?php endif; ?>

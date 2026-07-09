@@ -71,6 +71,48 @@ class Multimedia
     }
 
     /**
+     * Establece una foto como principal (orden = 1) de un alojamiento.
+     * Reordena el resto conservando el orden relativo (2, 3, 4, ...).
+     * Devuelve false si la foto no pertenece al alojamiento.
+     */
+    public function establecerPrincipal($multimedia_id, $alojamiento_id)
+    {
+        $fotos = $this->obtenerFotosPorAlojamiento($alojamiento_id);
+
+        // Verificar que la foto pertenece al alojamiento
+        $pertenece = false;
+        foreach ($fotos as $f) {
+            if ($f['multimedia_id'] === $multimedia_id) {
+                $pertenece = true;
+                break;
+            }
+        }
+        if (!$pertenece) {
+            return false;
+        }
+
+        // Nuevo orden: la elegida primero, luego el resto en su orden actual
+        $ordenIds = [];
+        foreach ($fotos as $f) {
+            if ($f['multimedia_id'] !== $multimedia_id) {
+                $ordenIds[] = $f['multimedia_id'];
+            }
+        }
+        array_unshift($ordenIds, $multimedia_id);
+
+        $stmt = $this->db->prepare(
+            "UPDATE multimedia SET orden = :orden, modificado = CURRENT_TIMESTAMP
+             WHERE multimedia_id = :multimedia_id"
+        );
+        foreach ($ordenIds as $i => $mid) {
+            $stmt->bindValue(':orden', $i + 1, PDO::PARAM_INT);
+            $stmt->bindValue(':multimedia_id', $mid);
+            $stmt->execute();
+        }
+        return true;
+    }
+
+    /**
      * Guardar un documento PDF (ej. Contrato firmado)
      */
     public function guardarDocumentoContrato($url, $nombre)

@@ -39,24 +39,38 @@ class PerfilController extends Controller
                 'numero_documento' => $_POST['numero_documento'] ?? ''
             ];
 
-            // Handle file upload
-            if (isset($_FILES['foto_perfil']) && $_FILES['foto_perfil']['error'] === UPLOAD_ERR_OK) {
-                $uploadDir = __DIR__ . '/../../public/uploads/perfiles/';
-                if (!is_dir($uploadDir)) {
-                    mkdir($uploadDir, 0777, true);
-                }
+            // Subida de foto de perfil — Azure Blob Storage
+            if (!empty($_FILES['foto_perfil']['name'])) {
+                $maxSize = 10 * 1024 * 1024; // 10MB
+                $ext = strtolower(pathinfo($_FILES['foto_perfil']['name'], PATHINFO_EXTENSION));
+                $allowed = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'jfif'];
 
-                $fileTmpPath = $_FILES['foto_perfil']['tmp_name'];
-                $fileName = $_FILES['foto_perfil']['name'];
-                $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-                $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                if ($_FILES['foto_perfil']['error'] !== UPLOAD_ERR_OK) {
+                    $this->setFlash('error', 'Error en la subida de la imagen. Código PHP: ' . $_FILES['foto_perfil']['error']);
+                    $this->redirect('/perfil');
+                } elseif ($_FILES['foto_perfil']['size'] > $maxSize) {
+                    $this->setFlash('error', 'La foto supera el tamaño máximo de 10 MB.');
+                    $this->redirect('/perfil');
+                } elseif (!in_array($ext, $allowed)) {
+                    $this->setFlash('error', 'Formato no válido. Solo JPG, PNG, WEBP o GIF.');
+                    $this->redirect('/perfil');
+                } else {
+                    $newName = 'usuarios/perfil_' . $usuario_id . '_' . time() . '.' . $ext;
 
-                if (in_array($fileExtension, $allowedExtensions)) {
-                    $newFileName = $usuario_id . '_' . time() . '.' . $fileExtension;
-                    $destPath = $uploadDir . $newFileName;
-                    if (move_uploaded_file($fileTmpPath, $destPath)) {
-                        $datos['url_foto'] = '/public/uploads/perfiles/' . $newFileName;
-                        $_SESSION['url_foto'] = $datos['url_foto']; // Update session
+                    $mimeType = 'image/jpeg';
+                    if (function_exists('mime_content_type')) {
+                        $mimeType = mime_content_type($_FILES['foto_perfil']['tmp_name']);
+                    }
+                    if (!$mimeType) $mimeType = 'image/jpeg';
+
+                    $azureUrl = \App\Core\AzureStorage::uploadFile($_FILES['foto_perfil']['tmp_name'], $newName, $mimeType);
+
+                    if ($azureUrl) {
+                        $datos['url_foto'] = $azureUrl;
+                        $_SESSION['url_foto'] = $azureUrl;
+                    } else {
+                        $this->setFlash('error', 'Error al subir la imagen a Azure Blob Storage.');
+                        $this->redirect('/perfil');
                     }
                 }
             }
