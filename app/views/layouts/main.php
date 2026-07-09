@@ -138,8 +138,8 @@
             <?php $flash = \App\Core\Controller::getFlash(); ?>
             <?php if ($flash): ?>
                 Swal.fire({
-                    icon: '<?php echo $flash['tipo']; ?>',
-                    title: '<?php echo addslashes($flash['mensaje']); ?>',
+                    icon: <?= json_encode($flash['tipo']) ?>,
+                    title: <?= json_encode($flash['mensaje']) ?>,
                     toast: true,
                     position: 'top-end',
                     showConfirmButton: false,

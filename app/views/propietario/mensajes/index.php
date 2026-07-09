@@ -48,7 +48,7 @@ $iniciales = function ($nombre) {
 .chat-conversacion .cc-head { padding:.75rem 1rem; border-bottom:1px solid var(--line,#e5e7eb); display:flex; align-items:center; gap:.65rem; }
 .chat-conversacion .cc-body { flex:1; overflow-y:auto; padding:1rem; background:#f8fafc; display:flex; flex-direction:column; gap:.4rem; }
 .chat-conversacion .cc-foot { padding:.75rem 1rem; border-top:1px solid var(--line,#e5e7eb); }
-.bubble { max-width:72%; padding:.55rem .8rem; border-radius:14px; font-size:.9rem; line-height:1.35; word-wrap:break-word; white-space:pre-wrap; }
+.bubble { width:fit-content; max-width:72%; min-width:0; padding:.55rem .8rem; border-radius:14px; font-size:.9rem; line-height:1.35; word-wrap:break-word; overflow-wrap:anywhere; white-space:pre-line; }
 .bubble.mia { align-self:flex-end; background:#2563eb; color:#fff; border-bottom-right-radius:4px; }
 .bubble.suya { align-self:flex-start; background:#fff; border:1px solid #e2e8f0; border-bottom-left-radius:4px; }
 .bubble .bh { font-size:.66rem; opacity:.7; margin-top:.2rem; display:block; }
@@ -110,10 +110,7 @@ $iniciales = function ($nombre) {
             </div>
             <div class="cc-body" id="cc-body">
                 <?php foreach ($mensajes as $m): ?>
-                    <div class="bubble <?= !empty($m['es_mio']) ? 'mia' : 'suya' ?>" data-id="<?= $e($m['mensaje_id']) ?>">
-                        <?= $e($m['contenido'] ?? '') ?>
-                        <span class="bh"><?= $e($fmtFecha($m['fecha_envio'] ?? null)) ?></span>
-                    </div>
+                    <div class="bubble <?= !empty($m['es_mio']) ? 'mia' : 'suya' ?>" data-id="<?= $e($m['mensaje_id']) ?>"><?= $e(trim($m['contenido'] ?? '')) ?><span class="bh"><?= $e($fmtFecha($m['fecha_envio'] ?? null)) ?></span></div>
                 <?php endforeach; ?>
             </div>
             <div class="cc-foot">
@@ -175,7 +172,7 @@ function appendMensaje(m) {
     const div = document.createElement('div');
     div.className = 'bubble ' + (esMio ? 'mia' : 'suya');
     div.setAttribute('data-id', m.mensaje_id);
-    div.innerHTML = escapeHtml(m.contenido || '') + '<span class="bh">' + escapeHtml(fmtHora(m.fecha_envio)) + '</span>';
+    div.innerHTML = escapeHtml(String(m.contenido || '').trim()) + '<span class="bh">' + escapeHtml(fmtHora(m.fecha_envio)) + '</span>';
     body.appendChild(div);
     ultimoId = m.mensaje_id;
     scrollAbajo();
@@ -221,10 +218,15 @@ function iniciarPolling() {
                 data.mensajes.forEach(appendMensaje);
             }
         } catch (e) {}
-    }, 5000);
+    }, 2000);
 }
 
-// Realtime (si hay SDK cargado)
+// Línea base de entrega rápida (≈2s) arrancando de inmediato: garantiza que el
+// chat se vea "en tiempo real" aunque el push de Supabase no esté disponible.
+iniciarPolling();
+
+// Push instantáneo vía Supabase Realtime (si el SDK está cargado). Se suma al
+// polling; appendMensaje() dedupe por mensaje_id evita duplicados.
 if (typeof supabase !== 'undefined') {
     try {
         const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
@@ -234,10 +236,6 @@ if (typeof supabase !== 'undefined') {
               payload => { conectado = true; appendMensaje(payload.new); })
           .subscribe(status => { if (status === 'SUBSCRIBED') conectado = true; });
     } catch (e) { console.warn('Realtime init error', e); }
-    // Fallback: si a los 5s no conectó, polling
-    setTimeout(() => { if (!conectado) iniciarPolling(); }, 5000);
-} else {
-    iniciarPolling();
 }
 </script>
 <?php elseif ($chatActivo && $otro && $supabaseAnonKey === ''): ?>
@@ -252,9 +250,9 @@ function scrollAbajo(){ if(body) body.scrollTop = body.scrollHeight; }
 scrollAbajo();
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function fmtHora(f){ if(!f) return ''; const ts=new Date(f.replace(' ','T')).getTime(); if(isNaN(ts)) return ''; return new Date(ts).toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'}); }
-function appendMensaje(m){ if(!m||!m.mensaje_id) return; if(body.querySelector('.bubble[data-id="'+m.mensaje_id+'"]')) return; const esMio=(m.usuario_id===uid); const div=document.createElement('div'); div.className='bubble '+(esMio?'mia':'suya'); div.setAttribute('data-id',m.mensaje_id); div.innerHTML=escapeHtml(m.contenido||'')+'<span class="bh">'+escapeHtml(fmtHora(m.fecha_envio))+'</span>'; body.appendChild(div); ultimoId=m.mensaje_id; scrollAbajo(); }
+function appendMensaje(m){ if(!m||!m.mensaje_id) return; if(body.querySelector('.bubble[data-id="'+m.mensaje_id+'"]')) return; const esMio=(m.usuario_id===uid); const div=document.createElement('div'); div.className='bubble '+(esMio?'mia':'suya'); div.setAttribute('data-id',m.mensaje_id); div.innerHTML=escapeHtml(String(m.contenido||'').trim())+'<span class="bh">'+escapeHtml(fmtHora(m.fecha_envio))+'</span>'; body.appendChild(div); ultimoId=m.mensaje_id; scrollAbajo(); }
 function usarPlantilla(txt){ if(textarea){ textarea.value=txt; textarea.focus(); } }
 async function enviarMensaje(ev){ ev.preventDefault(); const contenido=textarea.value; if(!contenido.trim()) return false; const btn=ev.target.querySelector('button'); btn.disabled=true; try{ const res=await fetch('/mensajes/enviar',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'chat_id='+encodeURIComponent(chatId)+'&contenido='+encodeURIComponent(contenido)}); const data=await res.json(); if(data.ok){ appendMensaje(data.mensaje); textarea.value=''; } else { Swal.fire({icon:'error',title:data.error||'Error',toast:true,position:'top-end',showConfirmButton:false,timer:3000}); } } catch(e){ Swal.fire({icon:'error',title:'Error de red',toast:true,position:'top-end',showConfirmButton:false,timer:3000}); } finally{ btn.disabled=false; } return false; }
-setInterval(async ()=>{ try{ const res=await fetch('/mensajes/nuevo?chat='+encodeURIComponent(chatId)+'&ultimo='+encodeURIComponent(ultimoId||'')); const data=await res.json(); if(data.ok&&Array.isArray(data.mensajes)) data.mensajes.forEach(appendMensaje); }catch(e){} }, 5000);
+setInterval(async ()=>{ try{ const res=await fetch('/mensajes/nuevo?chat='+encodeURIComponent(chatId)+'&ultimo='+encodeURIComponent(ultimoId||'')); const data=await res.json(); if(data.ok&&Array.isArray(data.mensajes)) data.mensajes.forEach(appendMensaje); }catch(e){} }, 2000);
 </script>
 <?php endif; ?>

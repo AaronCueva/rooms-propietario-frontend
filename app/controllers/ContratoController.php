@@ -140,6 +140,11 @@ class ContratoController extends Controller
 
         $azureUrl = \App\Core\AzureStorage::uploadFile($archivo['tmp_name'], $nuevoNombre, $mimeType);
 
+        if (!$azureUrl) {
+            // Fallback local si Azure falla o no está configurado
+            $azureUrl = \App\Core\AzureStorage::uploadFileLocal($archivo['tmp_name'], $nuevoNombre);
+        }
+
         if ($azureUrl) {
             // Guardar en multimedia
             $multimedia_id = $this->multimediaModel->guardarDocumentoContrato($azureUrl, $archivo['name']);
@@ -187,7 +192,7 @@ class ContratoController extends Controller
                 $this->redirect('/contratos/formalizar?reserva_id=' . $reserva_id);
             }
         } else {
-            $this->setFlash('error', 'Error al subir el documento a Azure Blob Storage.');
+            $this->setFlash('error', 'No se pudo guardar el documento (ni en Azure ni en almacenamiento local).');
             $this->redirect('/contratos/formalizar?reserva_id=' . $reserva_id);
         }
     }

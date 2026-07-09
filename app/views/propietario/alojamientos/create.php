@@ -135,7 +135,7 @@
                 </div>
                 <div class="field" style="grid-column: 1 / -1;">
                     <label>Distrito <span class="req">*</span></label>
-                    <select id="distrito" name="distrito" required disabled>
+                    <select id="distrito" name="distrito" required disabled onchange="centrarMapaDistrito()">
                         <option value="" selected disabled>Seleccione...</option>
                     </select>
                 </div>
@@ -230,7 +230,11 @@
     }).addTo(map);
 
     let marker = L.marker([-12.046374, -77.042793], {draggable: true}).addTo(map);
-    
+
+    // Inicializar coordenadas con la posición por defecto del marcador
+    document.getElementById('latitud').value = marker.getLatLng().lat;
+    document.getElementById('longitud').value = marker.getLatLng().lng;
+
     // Al mover el marcador
     marker.on('dragend', function(event) {
         let position = marker.getLatLng();
@@ -247,29 +251,52 @@
 
     // Geolocalización
     function ubicarMiPosicion() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(function(position) {
-                let lat = position.coords.latitude;
-                let lng = position.coords.longitude;
-                let latlng = new L.LatLng(lat, lng);
-                marker.setLatLng(latlng);
-                map.setView(latlng, 15);
-                document.getElementById('latitud').value = lat;
-                document.getElementById('longitud').value = lng;
-            }, function(error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error de ubicación',
-                    text: 'No pudimos obtener tu ubicación actual. Asegúrate de tener el GPS activado y dar permisos al navegador.',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 4000
-                });
+        if (!navigator.geolocation) {
+            Swal.fire({
+                icon: 'warning', title: 'No soportado',
+                text: 'Tu navegador no soporta geolocalización.',
+                toast: true, position: 'top-end', showConfirmButton: false, timer: 3000
             });
-        } else {
-            alert("Geolocalización no es soportada por tu navegador.");
+            return;
         }
+        let obtenido = false;
+        navigator.geolocation.getCurrentPosition(function(position) {
+            obtenido = true;
+            let lat = position.coords.latitude;
+            let lng = position.coords.longitude;
+            let latlng = L.latLng(lat, lng);
+            marker.setLatLng(latlng);
+            map.setView(latlng, 16);
+            document.getElementById('latitud').value = lat;
+            document.getElementById('longitud').value = lng;
+        }, function(error) {
+            // Si ya se obtuvo la posición, ignorar errores espurios (algunos navegadores
+            // disparan ambos callbacks). Así no mostramos el error cuando sí se jaló la ubicación.
+            if (obtenido) return;
+            let msg = 'No pudimos obtener tu ubicación actual. Asegúrate de tener el GPS activado y dar permisos al navegador.';
+            if (error.code === 1) msg = 'Permiso denegado. Habilita el acceso a tu ubicación en el navegador.';
+            else if (error.code === 2) msg = 'Posición no disponible. Verifica tu GPS o tu conexión.';
+            else if (error.code === 3) msg = 'Se agotó el tiempo al obtener la ubicación. Intenta de nuevo.';
+            Swal.fire({
+                icon: 'error', title: 'Error de ubicación', text: msg,
+                toast: true, position: 'top-end', showConfirmButton: false, timer: 4000
+            });
+        }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+    }
+
+    // Al seleccionar un distrito, centrar el mapa en sus coordenadas
+    function centrarMapaDistrito() {
+        const sel = document.getElementById('distrito');
+        const opt = sel.options[sel.selectedIndex];
+        if (!opt) return;
+        const lat = parseFloat(opt.dataset.lat);
+        const lng = parseFloat(opt.dataset.lng);
+        if (isNaN(lat) || isNaN(lng)) return;
+        const latlng = L.latLng(lat, lng);
+        marker.setLatLng(latlng);
+        map.setView(latlng, 14);
+        document.getElementById('latitud').value = lat;
+        document.getElementById('longitud').value = lng;
     }
 
     // --- GESTOR DE FOTOS ---
@@ -391,6 +418,8 @@
                     const option = document.createElement('option');
                     option.value = distrito.ubicacion_id;
                     option.textContent = distrito.nombre;
+                    option.dataset.lat = distrito.latitud ?? '';
+                    option.dataset.lng = distrito.longitud ?? '';
                     distritoSelect.appendChild(option);
                 });
                 distritoSelect.disabled = false;

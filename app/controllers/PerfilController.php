@@ -65,11 +65,16 @@ class PerfilController extends Controller
 
                     $azureUrl = \App\Core\AzureStorage::uploadFile($_FILES['foto_perfil']['tmp_name'], $newName, $mimeType);
 
+                    if (!$azureUrl) {
+                        // Fallback local si Azure falla o no está configurado
+                        $azureUrl = \App\Core\AzureStorage::uploadFileLocal($_FILES['foto_perfil']['tmp_name'], $newName);
+                    }
+
                     if ($azureUrl) {
                         $datos['url_foto'] = $azureUrl;
                         $_SESSION['url_foto'] = $azureUrl;
                     } else {
-                        $this->setFlash('error', 'Error al subir la imagen a Azure Blob Storage.');
+                        $this->setFlash('error', 'No se pudo guardar la imagen (ni en Azure ni en almacenamiento local).');
                         $this->redirect('/perfil');
                     }
                 }

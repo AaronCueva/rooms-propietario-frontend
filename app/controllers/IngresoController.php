@@ -169,14 +169,15 @@ class IngresoController extends Controller
             fclose($output);
             exit;
         } else if ($format === 'pdf') {
-            // Generar vista HTML para impresión
+            // Generar vista HTML para impresión (sin layout principal: el reporte
+            // es un documento independiente, no debe incluir sidebar ni topbar al imprimir)
             $this->render('propietario/ingresos/print', [
                 'ingresos' => $ingresos,
                 'mes' => $mes,
                 'anio' => $anio,
                 'nombre_mes' => $nombre_mes,
                 'titulo' => 'Reporte de Ingresos - ' . $nombre_mes . ' ' . $anio
-            ]);
+            ], null);
         }
     }
 }

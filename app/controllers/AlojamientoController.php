@@ -124,7 +124,9 @@ class AlojamientoController extends Controller
                 $this->redirect('/alojamientos/nuevo');
             }
 
-            // Procesar fotos — Azure Blob Storage
+            // Procesar fotos — Azure Blob Storage (con fallback local)
+            $fotos_ok = 0;
+            $fotos_fallidas = [];
             if (isset($_FILES['fotos']) && !empty($_FILES['fotos']['name'][0])) {
                 $allowed = ['jpg', 'jpeg', 'png', 'webp'];
                 $total_fotos = count($_FILES['fotos']['name']);
@@ -135,6 +137,7 @@ class AlojamientoController extends Controller
                         $extension = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
 
                         if (!in_array($extension, $allowed)) {
+                            $fotos_fallidas[] = $original_name . ' (extensión no permitida)';
                             continue;
                         }
 
@@ -146,15 +149,24 @@ class AlojamientoController extends Controller
                         }
                         if (!$mimeType) $mimeType = 'image/jpeg';
 
-                        $azureUrl = AzureStorage::uploadFile($tmp_name, $new_name, $mimeType);
+                        // 1) Intentar Azure Blob Storage
+                        $url = AzureStorage::uploadFile($tmp_name, $new_name, $mimeType);
 
-                        if ($azureUrl) {
+                        // 2) Fallback local si Azure falla o no está configurado
+                        if (!$url) {
+                            $url = AzureStorage::uploadFileLocal($tmp_name, $new_name);
+                        }
+
+                        if ($url) {
                             $this->multimediaModel->guardarFotoAlojamiento(
                                 $alojamiento_id,
-                                $azureUrl,
+                                $url,
                                 $original_name,
                                 $i + 1
                             );
+                            $fotos_ok++;
+                        } else {
+                            $fotos_fallidas[] = $original_name;
                         }
                     }
                 }
@@ -169,7 +181,15 @@ class AlojamientoController extends Controller
                 );
             }
 
-            $this->setFlash('success', '¡Cuarto publicado exitosamente!');
+            if (!empty($fotos_fallidas)) {
+                $this->setFlash(
+                    'warning',
+                    'Cuarto publicado, pero no se pudieron guardar ' . count($fotos_fallidas) . ' foto(s): '
+                    . implode(', ', $fotos_fallidas)
+                );
+            } else {
+                $this->setFlash('success', '¡Cuarto publicado exitosamente!');
+            }
             $this->redirect('/alojamientos');
 
         } catch (\Exception $e) {
@@ -413,6 +433,8 @@ class AlojamientoController extends Controller
             if ($f['orden'] > $ordenMax) $ordenMax = $f['orden'];
         }
 
+        $fotos_ok = 0;
+        $fotos_fallidas = [];
         if (isset($_FILES['nuevas_fotos']) && !empty($_FILES['nuevas_fotos']['name'][0])) {
             $allowed = ['jpg', 'jpeg', 'png', 'webp'];
             $total = count($_FILES['nuevas_fotos']['name']);
@@ -422,7 +444,10 @@ class AlojamientoController extends Controller
                     $original_name = $_FILES['nuevas_fotos']['name'][$i];
                     $extension = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
 
-                    if (!in_array($extension, $allowed)) continue;
+                    if (!in_array($extension, $allowed)) {
+                        $fotos_fallidas[] = $original_name . ' (extensión no permitida)';
+                        continue;
+                    }
 
                     $new_name = 'alojamientos/' . $alojamiento_id . '_' . ($ordenMax + 1) . '_' . time() . '.' . $extension;
 
@@ -432,22 +457,38 @@ class AlojamientoController extends Controller
                     }
                     if (!$mimeType) $mimeType = 'image/jpeg';
 
-                    $azureUrl = AzureStorage::uploadFile($tmp_name, $new_name, $mimeType);
+                    // 1) Azure Blob Storage, 2) fallback local si Azure falla
+                    $url = AzureStorage::uploadFile($tmp_name, $new_name, $mimeType);
+                    if (!$url) {
+                        $url = AzureStorage::uploadFileLocal($tmp_name, $new_name);
+                    }
 
-                    if ($azureUrl) {
+                    if ($url) {
                         $ordenMax++;
                         $this->multimediaModel->guardarFotoAlojamiento(
                             $alojamiento_id,
-                            $azureUrl,
+                            $url,
                             $original_name,
                             $ordenMax
                         );
+                        $fotos_ok++;
+                    } else {
+                        $fotos_fallidas[] = $original_name;
                     }
                 }
             }
         }
 
-        $this->setFlash('success', 'Fotos subidas correctamente.');
+        if (!empty($fotos_fallidas)) {
+            $this->setFlash(
+                'warning',
+                'No se pudieron guardar ' . count($fotos_fallidas) . ' foto(s): '
+                . implode(', ', $fotos_fallidas)
+                . ($fotos_ok > 0 ? ' (' . $fotos_ok . ' sí se guardaron).' : '.')
+            );
+        } else {
+            $this->setFlash('success', 'Fotos subidas correctamente.');
+        }
         $this->redirect('/alojamientos/editar?id=' . $alojamiento_id);
     }
 
