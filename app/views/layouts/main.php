@@ -22,6 +22,10 @@
     $foto_usuario = $_SESSION['url_foto'] ?? null;
     $nombre_completo = $_SESSION['nombres'] . ' ' . $_SESSION['apellidos'];
     $avatar_letras = strtoupper(substr($_SESSION['nombres'], 0, 1) . substr($_SESSION['apellidos'], 0, 1));
+
+    // Contar solicitudes pendientes para badge del sidebar
+    $reservaModel = new \App\Models\Reserva();
+    $pendientes_count = $reservaModel->contarPendientes($rol_id ? $_SESSION['usuario_id'] : 0);
     ?>
 
     <div class="app-shell active" id="app-shell">
@@ -46,6 +50,9 @@
                                 <i class="fas fa-circle fa-fw"></i>
                             <?php endif; ?>
                             <?php echo htmlspecialchars($hijo['nombre']); ?>
+                            <?php if ($hijo['url'] === '/solicitudes' && $pendientes_count > 0): ?>
+                                <span class="sb-badge"><?php echo $pendientes_count > 99 ? '99+' : $pendientes_count; ?></span>
+                            <?php endif; ?>
                         </a>
                     <?php endforeach; ?>
                 <?php else: // Es un enlace principal sin sección superior ?>
@@ -57,14 +64,21 @@
                             <i class="fas fa-circle fa-fw"></i>
                         <?php endif; ?>
                         <?php echo htmlspecialchars($seccion['nombre']); ?>
+                        <?php if ($seccion['url'] === '/solicitudes' && $pendientes_count > 0): ?>
+                            <span class="sb-badge"><?php echo $pendientes_count > 99 ? '99+' : $pendientes_count; ?></span>
+                        <?php endif; ?>
                     </a>
                 <?php endif; ?>
             <?php endforeach; ?>
             </div>
 
-            <div class="sb-bottom">
+            <div class="sb-bottom dropup">
                 <div class="sb-user" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;">
-                    <div class="sb-avatar"><?php echo $avatar_letras; ?></div>
+                    <?php if (!empty($foto_usuario)): ?>
+                        <div class="sb-avatar" style="background-image: url('<?php echo htmlspecialchars($foto_usuario); ?>'); background-size: cover; background-position: center; border: 1px solid var(--line); color: transparent;"><?php echo $avatar_letras; ?></div>
+                    <?php else: ?>
+                        <div class="sb-avatar"><?php echo $avatar_letras; ?></div>
+                    <?php endif; ?>
                     <div class="sb-user-meta">
                         <div class="u-name"><?php echo htmlspecialchars($_SESSION['nombres']); ?></div>
                         <div class="u-role">Propietario verificado</div>
@@ -72,6 +86,7 @@
                 </div>
                 <ul class="dropdown-menu dropdown-menu-start shadow animated--grow-in">
                     <li><a class="dropdown-item" href="/perfil"><i class="fas fa-user fa-sm fa-fw me-2 text-gray-400"></i> Perfil</a></li>
+                    <li><a class="dropdown-item" href="/perfil/password"><i class="fas fa-key fa-sm fa-fw me-2 text-gray-400"></i> Cambiar contraseña</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt fa-sm fa-fw me-2 text-gray-400"></i> Cerrar sesión</a></li>
                 </ul>

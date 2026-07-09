@@ -81,6 +81,8 @@ class Usuario
                     telefono = :telefono,
                     descripcion = :descripcion,
                     genero_codigo = :genero_codigo,
+                    tipo_documento_codigo = :tipo_documento_codigo,
+                    numero_documento = :numero_documento,
                     ubicacion_id = :ubicacion_id,
                     universidad_id = :universidad_id,
                     modificado = CURRENT_TIMESTAMP";
@@ -101,6 +103,8 @@ class Usuario
         $stmt->bindValue(':telefono', $datos['telefono'] ?? null);
         $stmt->bindValue(':descripcion', $datos['descripcion'] ?? null);
         $stmt->bindValue(':genero_codigo', $datos['genero_codigo'] ?? null);
+        $stmt->bindValue(':tipo_documento_codigo', $datos['tipo_documento_codigo'] ?? null);
+        $stmt->bindValue(':numero_documento', $datos['numero_documento'] ?? null);
         $stmt->bindValue(':ubicacion_id', !empty($datos['ubicacion_id']) ? $datos['ubicacion_id'] : null);
         $stmt->bindValue(':universidad_id', !empty($datos['universidad_id']) ? $datos['universidad_id'] : null);
         $stmt->bindValue(':id', $id);
@@ -129,5 +133,36 @@ class Usuario
         $stmt->bindParam(':password', $nuevo_password_hash);
         $stmt->bindParam(':id', $id);
         return $stmt->execute();
+    }
+
+    /**
+     * Actualiza el promedio de calificación y el total de calificaciones de un usuario
+     */
+    public function agregarCalificacion($usuario_id, $puntuacion)
+    {
+        // Traemos la info actual
+        $query = "SELECT calificacion, total_calificaciones FROM usuario WHERE usuario_id = :id FOR UPDATE";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':id', $usuario_id);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$row) return false;
+
+        $totalActual = (int)($row['total_calificaciones'] ?? 0);
+        $promedioActual = (float)($row['calificacion'] ?? 0);
+
+        // Nuevo cálculo
+        $nuevoTotal = $totalActual + 1;
+        $nuevoPromedio = (($promedioActual * $totalActual) + $puntuacion) / $nuevoTotal;
+
+        // Actualizamos
+        $upd = "UPDATE usuario SET calificacion = :promedio, total_calificaciones = :total, modificado = CURRENT_TIMESTAMP 
+                WHERE usuario_id = :id";
+        $stmtUpd = $this->db->prepare($upd);
+        $stmtUpd->bindValue(':promedio', $nuevoPromedio);
+        $stmtUpd->bindValue(':total', $nuevoTotal, PDO::PARAM_INT);
+        $stmtUpd->bindValue(':id', $usuario_id);
+        return $stmtUpd->execute();
     }
 }
