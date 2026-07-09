@@ -290,7 +290,7 @@ class ContratoController extends Controller
         // Marcar como finalizado
         if ($this->contratoModel->actualizarEstado($contrato_id, 'ESCO002')) {
             // Liberar alojamiento (cambiar a EPA001 - ACTIVO)
-            $this->alojamientoModel->cambiarEstado($contrato['alojamiento_id'], 'EPA001');
+            $this->alojamientoModel->cambiarEstado($contrato['alojamiento_id'], 'EPA003');
 
             $this->setFlash('success', 'Contrato finalizado. El alojamiento vuelve a estar Activo. Por favor, califique al inquilino.');
         } else {
