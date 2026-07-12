@@ -80,4 +80,18 @@ class Pago
         
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
+
+    public function anularPagosPendientes($contrato_id)
+    {
+        $sql = "UPDATE pago SET habilitado = FALSE 
+                WHERE contrato_id = :contrato_id AND estado_codigo = 'ESPA001' AND habilitado = TRUE";
+        try {
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindParam(':contrato_id', $contrato_id);
+            return $stmt->execute();
+        } catch (\Exception $e) {
+            error_log("Error anulando pagos pendientes: " . $e->getMessage());
+            return false;
+        }
+    }
 }

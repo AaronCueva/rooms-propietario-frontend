@@ -289,8 +289,16 @@ class ContratoController extends Controller
 
         // Marcar como finalizado
         if ($this->contratoModel->actualizarEstado($contrato_id, 'ESCO002')) {
-            // Liberar alojamiento (cambiar a EPA001 - ACTIVO)
+            // Liberar alojamiento (cambiar a EPA003 - APROBADO/DISPONIBLE)
             $this->alojamientoModel->cambiarEstado($contrato['alojamiento_id'], 'EPA003');
+
+            // Finalizar también la solicitud/reserva original
+            if (!empty($contrato['reserva_id'])) {
+                $this->reservaModel->cambiarEstado($contrato['reserva_id'], 'ESRE004');
+            }
+
+            // Anular cuotas pendientes de pago para que ya no aparezcan
+            $this->pagoModel->anularPagosPendientes($contrato_id);
 
             $this->setFlash('success', 'Contrato finalizado. El alojamiento vuelve a estar Activo. Por favor, califique al inquilino.');
         } else {
