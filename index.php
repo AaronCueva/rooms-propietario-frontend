@@ -118,6 +118,7 @@ $router->get('/ingresos', 'IngresoController', 'index');
 $router->get('/ingresos/cuenta', 'IngresoController', 'cuenta');
 $router->post('/ingresos/cuenta', 'IngresoController', 'cuenta');
 $router->get('/ingresos/exportar', 'IngresoController', 'exportar');
+$router->post('/ingresos/confirmar', 'IngresoController', 'confirmar');
 
 // Mensajes (chat inquilino ↔ propietario)
 $router->get('/mensajes', 'MensajeController', 'index');

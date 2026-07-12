@@ -41,7 +41,7 @@ class IngresoController extends Controller
             $hoy = new \DateTime();
             $vencimiento = new \DateTime($ing['fecha_vencimiento']);
             
-            if ($ing['estado_codigo'] === 'ESPA002') { // Pagado (Asumiendo ESPA002 es pagado)
+            if ($ing['estado_codigo'] === Pago::EST_COMPLETADO) { // Pagado (ESPG003)
                 $total_recibido += floatval($ing['monto']);
             } else {
                 if ($hoy > $vencimiento) {
@@ -107,6 +107,45 @@ class IngresoController extends Controller
         ]);
     }
 
+    /**
+     * POST /ingresos/confirmar — el propietario confirma recepción de una cuota.
+     * Acepta AJAX (JSON) o form normal (flash + redirect).
+     */
+    public function confirmar()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/ingresos');
+        }
+
+        $usuario_id = $_SESSION['usuario_id'];
+        $pago_id = $_POST['pago_id'] ?? null;
+        if (!$pago_id) {
+            $this->devolverRespuesta(false, 'Identificador de pago inválido.');
+            return;
+        }
+
+        $ok = $this->pagoModel->confirmarPago($pago_id, $usuario_id);
+        $this->devolverRespuesta(
+            $ok,
+            $ok ? 'Pago confirmado correctamente.' : 'No se pudo confirmar el pago (verifica que siga pendiente y que te pertenezca).'
+        );
+    }
+
+    private function devolverRespuesta(bool $exito, string $mensaje)
+    {
+        $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+               || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
+
+        if ($isAjax) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['success' => $exito, 'message' => $mensaje]);
+            exit;
+        }
+
+        $this->setFlash($exito ? 'success' : 'error', $mensaje);
+        $this->redirect('/ingresos');
+    }
+
     public function exportar()
     {
         $usuario_id = $_SESSION['usuario_id'];
@@ -139,7 +178,7 @@ class IngresoController extends Controller
                 $vencimiento = new \DateTime($ing['fecha_vencimiento']);
                 
                 $estado = 'Pagado';
-                if ($ing['estado_codigo'] !== 'ESPA002') {
+                if ($ing['estado_codigo'] !== Pago::EST_COMPLETADO) {
                     if ($hoy > $vencimiento) {
                         $estado = 'Retrasado';
                     } else {

@@ -111,12 +111,13 @@
                             <th class="border-0 px-4 py-3" style="border-bottom: 1px solid var(--line) !important;">Vencimiento</th>
                             <th class="border-0 px-4 py-3 text-end" style="border-bottom: 1px solid var(--line) !important;">Monto (S/)</th>
                             <th class="border-0 px-4 py-3 text-center" style="border-bottom: 1px solid var(--line) !important;">Estado</th>
+                            <th class="border-0 px-4 py-3 text-center" style="border-bottom: 1px solid var(--line) !important;">Acción</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($ingresos)): ?>
                             <tr>
-                                <td colspan="6" class="text-center py-5 text-muted">
+                                <td colspan="7" class="text-center py-5 text-muted">
                                     <i class="fas fa-file-invoice-dollar fs-3 mb-2 d-block text-black-50"></i>
                                     No hay cuotas programadas para este mes.
                                 </td>
@@ -150,6 +151,17 @@
                                             <span class="badge" style="background: var(--green-wash); color: var(--green); font-size: 11px;">Pagado</span>
                                         <?php endif; ?>
                                     </td>
+                                    <td class="px-4 py-3 text-center">
+                                        <?php if (isset($ing['estado_mostrar']) && in_array($ing['estado_mostrar'], ['Pendiente','Retrasado'], true)): ?>
+                                            <button type="button" class="btn btn-sm btn-success confirmar-pago"
+                                                    data-pago-id="<?php echo htmlspecialchars($ing['pago_id'], ENT_QUOTES); ?>"
+                                                    style="border-radius: 8px; font-weight: 600;">
+                                                <i class="fas fa-check me-1"></i> Confirmar
+                                            </button>
+                                        <?php else: ?>
+                                            <span class="text-muted small">—</span>
+                                        <?php endif; ?>
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>
@@ -159,3 +171,42 @@
         </div>
     </div>
 </div>
+
+<script>
+(function () {
+    document.querySelectorAll('.confirmar-pago').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var pagoId = btn.dataset.pagoId;
+            Swal.fire({
+                title: '¿Confirmar recepción del pago?',
+                text: 'Marcarás esta cuota como pagada/recibida.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#198754',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, confirmar',
+                cancelButtonText: 'Cancelar'
+            }).then(function (r) {
+                if (!r.isConfirmed) return;
+                var fd = new FormData(); fd.append('pago_id', pagoId);
+                fetch('/ingresos/confirmar', {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body: fd
+                })
+                .then(function (res) { return res.json(); })
+                .then(function (d) {
+                    Swal.fire({
+                        icon: d.success ? 'success' : 'error',
+                        title: d.success ? 'Confirmado' : 'Error',
+                        text: d.message,
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(function () { if (d.success) window.location.reload(); });
+                })
+                .catch(function () { window.location.reload(); });
+            });
+        });
+    });
+})();
+</script>
