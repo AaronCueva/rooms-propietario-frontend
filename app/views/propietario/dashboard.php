@@ -134,11 +134,14 @@
                     <?php foreach ($alojamientos as $alj):
                         $codigoCorto = substr($alj['codigo'] ?? 'C', -2);
                         if ($alj['estado_codigo'] === 'EPA001') {
-                            $color = 'bg-success';
-                            $estadoText = 'Disponible';
+                            $color = 'bg-primary';
+                            $estadoText = 'En revisión';
                         } elseif ($alj['estado_codigo'] === 'EPA004') {
                             $color = 'bg-warning';
                             $estadoText = 'Ocupado';
+                        } elseif ($alj['estado_codigo'] === 'EPA003') {
+                            $color = 'bg-success';
+                            $estadoText = 'Disponible';
                         } else {
                             $color = 'bg-danger';
                             $estadoText = 'Inactivo';

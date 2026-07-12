@@ -11,6 +11,8 @@ use App\Models\Servicio;
 use App\Models\PoliticaCasa;
 use App\Models\AlojamientoServicio;
 use App\Models\AlojamientoPolitica;
+use App\Models\AlojamientoUniversidad;
+use App\Core\AzureStorage;
 
 class AlojamientoController extends Controller
 {
@@ -122,15 +124,11 @@ class AlojamientoController extends Controller
                 $this->redirect('/alojamientos/nuevo');
             }
 
-            // Procesar fotos
+            // Procesar fotos — Azure Blob Storage (con fallback local)
+            $fotos_ok = 0;
+            $fotos_fallidas = [];
             if (isset($_FILES['fotos']) && !empty($_FILES['fotos']['name'][0])) {
-                $upload_dir = __DIR__ . '/../../public/uploads/alojamientos/';
-
-                // Asegurarse que el directorio existe
-                if (!is_dir($upload_dir)) {
-                    mkdir($upload_dir, 0755, true);
-                }
-
+                $allowed = ['jpg', 'jpeg', 'png', 'webp'];
                 $total_fotos = count($_FILES['fotos']['name']);
                 for ($i = 0; $i < $total_fotos; $i++) {
                     if ($_FILES['fotos']['error'][$i] === UPLOAD_ERR_OK) {
@@ -138,31 +136,60 @@ class AlojamientoController extends Controller
                         $original_name = $_FILES['fotos']['name'][$i];
                         $extension = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
 
-                        // Validar extensión
-                        $allowed = ['jpg', 'jpeg', 'png', 'webp'];
                         if (!in_array($extension, $allowed)) {
+                            $fotos_fallidas[] = $original_name . ' (extensión no permitida)';
                             continue;
                         }
 
-                        // Generar nombre único
-                        $new_name = uniqid('aloj_') . '_' . time() . '.' . $extension;
-                        $destination = $upload_dir . $new_name;
+                        $new_name = 'alojamientos/' . $alojamiento_id . '_' . ($i + 1) . '_' . time() . '.' . $extension;
 
-                        if (move_uploaded_file($tmp_name, $destination)) {
-                            $url_relativa = '/public/uploads/alojamientos/' . $new_name;
+                        $mimeType = 'image/jpeg';
+                        if (function_exists('mime_content_type')) {
+                            $mimeType = mime_content_type($tmp_name);
+                        }
+                        if (!$mimeType) $mimeType = 'image/jpeg';
+
+                        // 1) Intentar Azure Blob Storage
+                        $url = AzureStorage::uploadFile($tmp_name, $new_name, $mimeType);
+
+                        // 2) Fallback local si Azure falla o no está configurado
+                        if (!$url) {
+                            $url = AzureStorage::uploadFileLocal($tmp_name, $new_name);
+                        }
+
+                        if ($url) {
                             $this->multimediaModel->guardarFotoAlojamiento(
                                 $alojamiento_id,
-                                $url_relativa,
+                                $url,
                                 $original_name,
                                 $i + 1
                             );
+                            $fotos_ok++;
+                        } else {
+                            $fotos_fallidas[] = $original_name;
                         }
                     }
                 }
             }
 
+            // Sincronizar cercanía a universidades (alojamiento_universidad) según coordenadas
+            if (!empty($datos['latitud']) && !empty($datos['longitud'])) {
+                (new AlojamientoUniversidad())->sincronizarParaAlojamiento(
+                    $alojamiento_id,
+                    $datos['latitud'],
+                    $datos['longitud']
+                );
+            }
 
-            $this->setFlash('success', '¡Cuarto publicado exitosamente!');
+            if (!empty($fotos_fallidas)) {
+                $this->setFlash(
+                    'warning',
+                    'Cuarto publicado, pero no se pudieron guardar ' . count($fotos_fallidas) . ' foto(s): '
+                    . implode(', ', $fotos_fallidas)
+                );
+            } else {
+                $this->setFlash('success', '¡Cuarto publicado exitosamente!');
+            }
             $this->redirect('/alojamientos');
 
         } catch (\Exception $e) {
@@ -205,6 +232,13 @@ class AlojamientoController extends Controller
         $servicios_disponibles = $this->servicioModel->obtenerTodos();
         $politicas_disponibles = $this->politicaModel->obtenerTodos();
 
+        // Reseñas del alojamiento (resenia_alojamiento) + universidades cercanas
+        $reseniaModel = new \App\Models\ReseniaAlojamiento();
+        $resenas = $reseniaModel->getByAlojamientoId($alojamiento_id);
+
+        $alojamientoUniversidadModel = new AlojamientoUniversidad();
+        $universidades_cercanas = $alojamientoUniversidadModel->obtenerPorAlojamiento($alojamiento_id);
+
         $this->render('propietario/alojamientos/edit', [
             'alojamiento' => $alojamiento,
             'tipos_alojamiento' => $tipos_alojamiento,
@@ -218,8 +252,38 @@ class AlojamientoController extends Controller
             'beneficios' => $beneficios,
             'servicios_disponibles' => $servicios_disponibles,
             'politicas_disponibles' => $politicas_disponibles,
+            'resenas' => $resenas,
+            'universidades_cercanas' => $universidades_cercanas,
             'titulo' => 'Editar alojamiento'
         ]);
+    }
+
+    /**
+     * El propietario responde a una reseña de su alojamiento (resenia_alojamiento)
+     */
+    public function responderResena()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/alojamientos');
+        }
+
+        $alojamiento_id = $_POST['alojamiento_id'] ?? null;
+        $resenia_id = $_POST['resenia_alojamiento_id'] ?? null;
+        $respuesta = trim($_POST['respuesta'] ?? '');
+
+        if (!$alojamiento_id || !$resenia_id || $respuesta === '') {
+            $this->setFlash('error', 'Datos inválidos para responder la reseña.');
+            $this->redirect('/alojamientos/editar?id=' . $alojamiento_id);
+        }
+
+        $reseniaModel = new \App\Models\ReseniaAlojamiento();
+        if ($reseniaModel->responder($resenia_id, $_SESSION['usuario_id'], $respuesta)) {
+            $this->setFlash('success', 'Respuesta publicada correctamente.');
+        } else {
+            $this->setFlash('error', 'No se pudo guardar la respuesta. Verifica que la reseña pertenezca a tu alojamiento.');
+        }
+
+        $this->redirect('/alojamientos/editar?id=' . $alojamiento_id);
     }
 
     /**
@@ -259,6 +323,16 @@ class AlojamientoController extends Controller
         ];
 
         $this->alojamientoModel->actualizar($alojamiento_id, $datos);
+
+        // Re-sincronizar cercanía a universidades si las coordenadas cambiaron
+        if (!empty($datos['latitud']) && !empty($datos['longitud'])) {
+            (new AlojamientoUniversidad())->sincronizarParaAlojamiento(
+                $alojamiento_id,
+                $datos['latitud'],
+                $datos['longitud']
+            );
+        }
+
         $this->setFlash('success', 'Datos guardados correctamente.');
         $this->redirect('/alojamientos/editar?id=' . $alojamiento_id);
     }
@@ -359,12 +433,10 @@ class AlojamientoController extends Controller
             if ($f['orden'] > $ordenMax) $ordenMax = $f['orden'];
         }
 
+        $fotos_ok = 0;
+        $fotos_fallidas = [];
         if (isset($_FILES['nuevas_fotos']) && !empty($_FILES['nuevas_fotos']['name'][0])) {
-            $upload_dir = __DIR__ . '/../../public/uploads/alojamientos/';
-            if (!is_dir($upload_dir)) {
-                mkdir($upload_dir, 0755, true);
-            }
-
+            $allowed = ['jpg', 'jpeg', 'png', 'webp'];
             $total = count($_FILES['nuevas_fotos']['name']);
             for ($i = 0; $i < $total; $i++) {
                 if ($_FILES['nuevas_fotos']['error'][$i] === UPLOAD_ERR_OK) {
@@ -372,27 +444,51 @@ class AlojamientoController extends Controller
                     $original_name = $_FILES['nuevas_fotos']['name'][$i];
                     $extension = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
 
-                    $allowed = ['jpg', 'jpeg', 'png', 'webp'];
-                    if (!in_array($extension, $allowed)) continue;
+                    if (!in_array($extension, $allowed)) {
+                        $fotos_fallidas[] = $original_name . ' (extensión no permitida)';
+                        continue;
+                    }
 
-                    $new_name = uniqid('aloj_') . '_' . time() . '.' . $extension;
-                    $destination = $upload_dir . $new_name;
+                    $new_name = 'alojamientos/' . $alojamiento_id . '_' . ($ordenMax + 1) . '_' . time() . '.' . $extension;
 
-                    if (move_uploaded_file($tmp_name, $destination)) {
+                    $mimeType = 'image/jpeg';
+                    if (function_exists('mime_content_type')) {
+                        $mimeType = mime_content_type($tmp_name);
+                    }
+                    if (!$mimeType) $mimeType = 'image/jpeg';
+
+                    // 1) Azure Blob Storage, 2) fallback local si Azure falla
+                    $url = AzureStorage::uploadFile($tmp_name, $new_name, $mimeType);
+                    if (!$url) {
+                        $url = AzureStorage::uploadFileLocal($tmp_name, $new_name);
+                    }
+
+                    if ($url) {
                         $ordenMax++;
-                        $url_relativa = '/public/uploads/alojamientos/' . $new_name;
                         $this->multimediaModel->guardarFotoAlojamiento(
                             $alojamiento_id,
-                            $url_relativa,
+                            $url,
                             $original_name,
                             $ordenMax
                         );
+                        $fotos_ok++;
+                    } else {
+                        $fotos_fallidas[] = $original_name;
                     }
                 }
             }
         }
 
-        $this->setFlash('success', 'Fotos subidas correctamente.');
+        if (!empty($fotos_fallidas)) {
+            $this->setFlash(
+                'warning',
+                'No se pudieron guardar ' . count($fotos_fallidas) . ' foto(s): '
+                . implode(', ', $fotos_fallidas)
+                . ($fotos_ok > 0 ? ' (' . $fotos_ok . ' sí se guardaron).' : '.')
+            );
+        } else {
+            $this->setFlash('success', 'Fotos subidas correctamente.');
+        }
         $this->redirect('/alojamientos/editar?id=' . $alojamiento_id);
     }
 
@@ -411,6 +507,37 @@ class AlojamientoController extends Controller
         if ($multimedia_id) {
             $this->multimediaModel->eliminar($multimedia_id);
             $this->setFlash('success', 'Foto eliminada.');
+        }
+
+        $this->redirect('/alojamientos/editar?id=' . $alojamiento_id);
+    }
+
+    /**
+     * Establecer una foto como principal del alojamiento
+     */
+    public function establecerFotoPrincipal()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/alojamientos');
+        }
+
+        $alojamiento_id = $_POST['alojamiento_id'] ?? null;
+        $multimedia_id = $_POST['multimedia_id'] ?? null;
+
+        if (!$alojamiento_id || !$multimedia_id) {
+            $this->redirect('/alojamientos');
+        }
+
+        // Verificar que el alojamiento pertenece al propietario
+        $alojamiento = $this->alojamientoModel->obtenerPorId($alojamiento_id);
+        if (!$alojamiento || $alojamiento['usuario_id'] !== $_SESSION['usuario_id']) {
+            $this->redirect('/alojamientos');
+        }
+
+        if ($this->multimediaModel->establecerPrincipal($multimedia_id, $alojamiento_id)) {
+            $this->setFlash('success', 'Foto principal actualizada correctamente.');
+        } else {
+            $this->setFlash('error', 'No se pudo actualizar la foto principal.');
         }
 
         $this->redirect('/alojamientos/editar?id=' . $alojamiento_id);

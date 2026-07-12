@@ -22,9 +22,9 @@ class Ubicacion {
     }
 
     public function obtenerPorReferencia($referencia_id) {
-        $query = "SELECT ubicacion_id, nombre 
-                  FROM ubicacion 
-                  WHERE referencia_id = :referencia_id 
+        $query = "SELECT ubicacion_id, nombre, latitud, longitud
+                  FROM ubicacion
+                  WHERE referencia_id = :referencia_id
                   ORDER BY nombre ASC";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':referencia_id', $referencia_id);

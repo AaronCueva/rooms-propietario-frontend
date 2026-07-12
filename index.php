@@ -84,10 +84,12 @@ $router->post('/alojamientos/servicios', 'AlojamientoController', 'gestionarServ
 $router->post('/alojamientos/politicas', 'AlojamientoController', 'gestionarPoliticas');
 $router->post('/alojamientos/fotos/agregar', 'AlojamientoController', 'agregarFotos');
 $router->post('/alojamientos/fotos/eliminar', 'AlojamientoController', 'eliminarFoto');
+$router->post('/alojamientos/fotos/principal', 'AlojamientoController', 'establecerFotoPrincipal');
 $router->post('/alojamientos/descuentos/agregar', 'AlojamientoController', 'agregarDescuento');
 $router->post('/alojamientos/descuentos/eliminar', 'AlojamientoController', 'eliminarDescuento');
 $router->post('/alojamientos/beneficios/agregar', 'AlojamientoController', 'agregarBeneficio');
 $router->post('/alojamientos/beneficios/eliminar', 'AlojamientoController', 'eliminarBeneficio');
+$router->post('/alojamientos/resenas/responder', 'AlojamientoController', 'responderResena');
 
 // Rutas de Solicitudes
 $router->get('/solicitudes', 'SolicitudController', 'index');
@@ -105,6 +107,7 @@ $router->post('/contratos/guardar', 'ContratoController', 'guardar');
 $router->get('/contratos/detalle', 'ContratoController', 'detalle');
 $router->post('/contratos/finalizar', 'ContratoController', 'finalizar');
 $router->post('/contratos/calificar', 'ContratoController', 'calificar');
+$router->post('/contratos/resena/responder', 'ContratoController', 'responderResena');
 
 // Inquilinos
 $router->get('/inquilinos', 'InquilinoController', 'index');
@@ -115,6 +118,11 @@ $router->get('/ingresos', 'IngresoController', 'index');
 $router->get('/ingresos/cuenta', 'IngresoController', 'cuenta');
 $router->post('/ingresos/cuenta', 'IngresoController', 'cuenta');
 $router->get('/ingresos/exportar', 'IngresoController', 'exportar');
+
+// Mensajes (chat inquilino ↔ propietario)
+$router->get('/mensajes', 'MensajeController', 'index');
+$router->get('/mensajes/nuevo', 'MensajeController', 'nuevo');
+$router->post('/mensajes/enviar', 'MensajeController', 'enviar');
 
 // Perfil
 $router->get('/perfil', 'PerfilController', 'index');

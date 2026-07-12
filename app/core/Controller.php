@@ -7,7 +7,7 @@ class Controller {
      * Renderiza una vista dentro de un layout.
      * @param string $view Ruta de la vista (ej. 'auth/login')
      * @param array $data Datos a pasar a la vista
-     * @param string $layout Plantilla base a usar (ej. 'auth', 'main')
+     * @param string|null $layout Plantilla base a usar (ej. 'auth', 'main'). null = sin layout (vista cruda).
      */
     public function render($view, $data = [], $layout = 'main') {
         // Extraer variables para que estén disponibles en la vista
@@ -22,6 +22,12 @@ class Controller {
             die("Vista no encontrada: " . $viewFile);
         }
         $content = ob_get_clean();
+
+        // Sin layout: se imprime solo el contenido de la vista (ej. reportes para impresión/PDF)
+        if ($layout === null) {
+            echo $content;
+            return;
+        }
 
         // Requerir el layout e inyectar el contenido de la vista
         $layoutFile = __DIR__ . '/../views/layouts/' . $layout . '.php';

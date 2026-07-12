@@ -256,6 +256,56 @@ $iniciales = strtoupper(substr($contrato['inquilino_nombres'] ?? 'I', 0, 1) . su
                     </div>
                 </div>
             <?php endif; ?>
+
+            <!-- Reseñas del contrato (tabla resena) -->
+            <div class="card border-0 shadow-sm mt-4" style="border-radius: 16px;">
+                <div class="card-body p-4">
+                    <h6 class="mb-4 pb-3 border-bottom" style="font-family: var(--font-display); font-weight: 700;">
+                        <i class="fas fa-comments text-primary me-2"></i> Reseñas del contrato
+                    </h6>
+
+                    <?php if (!empty($resenas)): ?>
+                        <?php foreach ($resenas as $res): ?>
+                            <?php $nombre_res = htmlspecialchars(trim(($res['nombres'] ?? '') . ' ' . ($res['apellido_paterno'] ?? ''))); ?>
+                            <div class="p-3 mb-3" style="background: var(--gray-50); border-radius: 12px; border: 1px solid var(--line);">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <div style="font-weight: 600; color: var(--ink); font-size: 14px;"><?php echo $nombre_res; ?></div>
+                                        <div style="font-size: 12px; color: var(--ink-faint);">
+                                            <?php for ($s = 1; $s <= 5; $s++): ?>
+                                                <i class="fas fa-star" style="font-size:11px; color:<?php echo $s <= (int)$res['calificacion'] ? '#F59E0B' : '#D1D5DB'; ?>;"></i>
+                                            <?php endfor; ?>
+                                            <?php if (!empty($res['fecha_creado'])): ?>
+                                                · <?php echo date('d/m/Y', strtotime($res['fecha_creado'])); ?>
+                                            <?php endif; ?>
+                                            <?php if (!empty($res['estado_nombre'])): ?>
+                                                · <span class="badge badge-faint"><?php echo htmlspecialchars($res['estado_nombre']); ?></span>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="font-size: 13.5px; color: var(--ink);"><?php echo htmlspecialchars($res['comentario'] ?? ''); ?></div>
+
+                                <?php if (!empty($res['respuesta_propietario'])): ?>
+                                    <div class="mt-3 p-2" style="background: var(--green-wash); border-radius: 8px; border-left: 3px solid var(--green);">
+                                        <div style="font-size: 11px; font-weight: 700; color: var(--green); margin-bottom: 2px;"><i class="fas fa-reply me-1"></i> Tu respuesta</div>
+                                        <div style="font-size: 13px; color: var(--ink);"><?php echo htmlspecialchars($res['respuesta_propietario']); ?></div>
+                                    </div>
+                                <?php else: ?>
+                                    <form action="/contratos/resena/responder" method="POST" class="mt-3">
+                                        <input type="hidden" name="contrato_id" value="<?php echo $contrato['contrato_id']; ?>">
+                                        <input type="hidden" name="resena_id" value="<?php echo $res['resena_id']; ?>">
+                                        <textarea name="respuesta" rows="2" required class="form-control mb-2" style="border-radius: 8px; font-size: 13px;" placeholder="Responde a esta reseña..."></textarea>
+                                        <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-paper-plane me-1"></i> Publicar respuesta</button>
+                                    </form>
+                                <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <p class="text-muted" style="font-size: 14px;">Aún no hay reseñas para este contrato.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
         </div>
 
         <!-- Columna Derecha -->

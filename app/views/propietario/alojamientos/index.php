@@ -35,7 +35,9 @@
                         <div class="status-dot">
                             <?php
                             $estado = $aloj['estado_codigo'] ?? 'EPA001';
-                            if ($estado === 'EPA001' || $estado === 'EPA003'): ?>
+                            if ($estado === 'EPA001'): ?>
+                                <span class="badge badge-amber">En Revisión</span>
+                            <?php elseif ($estado === 'EPA003'): ?>
                                 <span class="badge badge-green">Disponible</span>
                             <?php elseif ($estado === 'EPA004'): ?>
                                 <span class="badge badge-amber">Ocupado</span>
