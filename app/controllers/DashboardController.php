@@ -50,7 +50,7 @@ class DashboardController extends Controller
         $total_recibido_mes = 0;
         foreach ($ingresos_mes as $ing) {
             $total_proyectado_mes += floatval($ing['monto']);
-            if ($ing['estado_codigo'] === 'ESPA002') { // Pagado
+            if ($ing['estado_codigo'] === \App\Models\Pago::EST_COMPLETADO) { // Pagado
                 $total_recibido_mes += floatval($ing['monto']);
             }
         }
@@ -80,7 +80,7 @@ class DashboardController extends Controller
             $r = 0;
             foreach ($ing_hist as $ih) {
                 $p += floatval($ih['monto']);
-                if ($ih['estado_codigo'] === 'ESPA002') {
+                if ($ih['estado_codigo'] === \App\Models\Pago::EST_COMPLETADO) {
                     $r += floatval($ih['monto']);
                 }
             }

@@ -35,7 +35,7 @@
         foreach ($ingresos as $ing) {
             $hoy_ = new \DateTime();
             $venc_ = new \DateTime($ing['fecha_vencimiento']);
-            if ($ing['estado_codigo'] === 'ESPA002') {
+            if ($ing['estado_codigo'] === \App\Models\Pago::EST_COMPLETADO) {
                 $cnt_pagado++;
             } elseif ($hoy_ > $venc_) {
                 $cnt_retrasado++;
@@ -115,7 +115,7 @@
                         $estado = 'Pagado';
                         $badge_class = 'badge-green';
 
-                        if ($ing['estado_codigo'] !== 'ESPA002') {
+                        if ($ing['estado_codigo'] !== \App\Models\Pago::EST_COMPLETADO) {
                             if ($hoy > $vencimiento) {
                                 $estado = 'Retrasado';
                                 $badge_class = 'badge-red';
